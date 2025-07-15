@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:muse_mate/screen/chat_screen.dart';
 
-class MyChatApp extends StatelessWidget {
-  const MyChatApp({super.key});
+class ChatApp extends StatelessWidget {
+  const ChatApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,17 +29,6 @@ class MyChatApp extends StatelessWidget {
         },
       ),
     );
-  }
-}
-
-Future<User?> signInAnonymously() async {
-  try {
-    UserCredential userCredential = await FirebaseAuth.instance
-        .signInAnonymously();
-    return userCredential.user;
-  } catch (e) {
-    print('Error signing in anonymously: $e');
-    return null;
   }
 }
 
