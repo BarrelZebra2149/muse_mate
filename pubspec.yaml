@@ -28,6 +28,11 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  firebase_core: ^3.15.1
+  firebase_auth: ^5.6.2
+  cloud_firestore: ^5.6.2
+  flutter_chat_ui: ^2.6.2 # For ready-made chat UI
+  flutter_chat_core: ^2.0.0 # For chat logic
   flutter:
     sdk: flutter
 
