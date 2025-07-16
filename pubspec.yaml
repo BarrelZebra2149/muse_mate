@@ -34,6 +34,7 @@ dependencies:
   flutter_chat_ui: ^2.6.2 # For ready-made chat UI
   flutter_chat_core: ^2.0.0 # For chat logic
   google_maps_flutter: ^2.5.0
+  google_maps_flutter_web: ^0.5.12+2
   geolocator: ^11.0.0
   permission_handler: ^11.2.0
 
