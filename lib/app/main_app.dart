@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:muse_mate/screen/drop_music_screen.dart';
 import 'package:muse_mate/screen/open_streaming_screen.dart';
 import 'package:muse_mate/app/chat_app.dart';
+import 'package:muse_mate/screen/map_screen.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -39,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +69,10 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: const Text('Muse Mate'),
+      ),
+      body: const MapScreen(),
     );
   }
 }
