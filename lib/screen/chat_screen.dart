@@ -35,8 +35,9 @@ class _MessageScreenState extends State<MessageScreen> {
                   .orderBy('createdAt', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData)
+                if (!snapshot.hasData) {
                   return Center(child: CircularProgressIndicator());
+                }
                 final docs = snapshot.data!.docs;
                 return ListView.builder(
                   reverse: true,

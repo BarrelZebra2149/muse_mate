@@ -4,7 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({Key? key}) : super(key: key);
+  const MapScreen({super.key});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -45,9 +45,9 @@ class _MapScreenState extends State<MapScreen> {
       // 권한이 없으면 요청
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('위치 권한이 거부되었습니다.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('위치 권한이 거부되었습니다.')));
         return false;
       }
     }
@@ -67,14 +67,14 @@ class _MapScreenState extends State<MapScreen> {
 
     if (!hasPermission) {
       setState(() {
-        _isLoading = false;  // 권한이 없어도 로딩은 끝냄
+        _isLoading = false; // 권한이 없어도 로딩은 끝냄
       });
       return;
     }
 
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high
+        desiredAccuracy: LocationAccuracy.high,
       );
 
       setState(() {
@@ -86,10 +86,7 @@ class _MapScreenState extends State<MapScreen> {
           Marker(
             markerId: const MarkerId('currentLocation'),
             position: _currentPosition,
-            infoWindow: const InfoWindow(
-              title: '내 위치',
-              snippet: '현재 위치입니다',
-            ),
+            infoWindow: const InfoWindow(title: '내 위치', snippet: '현재 위치입니다'),
           ),
         );
       });
@@ -98,10 +95,7 @@ class _MapScreenState extends State<MapScreen> {
       if (mapController != null) {
         mapController!.animateCamera(
           CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: _currentPosition,
-              zoom: 15.0,
-            ),
+            CameraPosition(target: _currentPosition, zoom: 15.0),
           ),
         );
       }
@@ -119,10 +113,7 @@ class _MapScreenState extends State<MapScreen> {
     if (!_isLoading) {
       mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: _currentPosition,
-            zoom: 15.0,
-          ),
+          CameraPosition(target: _currentPosition, zoom: 15.0),
         ),
       );
     }
@@ -134,15 +125,15 @@ class _MapScreenState extends State<MapScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: CameraPosition(
-          target: _currentPosition,
-          zoom: 15.0,
-        ),
-        markers: _markers,
-        myLocationEnabled: true,  // 현재 위치 파란색 점 표시
-        myLocationButtonEnabled: true,  // 현재 위치로 이동하는 버튼 표시
-      ),
+              onMapCreated: _onMapCreated,
+              initialCameraPosition: CameraPosition(
+                target: _currentPosition,
+                zoom: 15.0,
+              ),
+              markers: _markers,
+              myLocationEnabled: true, // 현재 위치 파란색 점 표시
+              myLocationButtonEnabled: true, // 현재 위치로 이동하는 버튼 표시
+            ),
     );
   }
 }
