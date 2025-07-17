@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+class MessageScreen extends StatefulWidget {
+  const MessageScreen({super.key});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  _MessageScreenState createState() => _MessageScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _MessageScreenState extends State<MessageScreen> {
   final TextEditingController _controller = TextEditingController();
   final User? user = FirebaseAuth.instance.currentUser;
 
@@ -26,7 +26,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Live Chat')),
       body: Column(
         children: [
           Expanded(

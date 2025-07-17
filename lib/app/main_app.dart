@@ -34,13 +34,12 @@ class _MyHomePageState extends State<MyHomePage> {
       'screen': const OpenStreaming(),
     },
     {'icon': Icons.arrow_drop_down, 'title': '드랍', 'screen': const DropMusic()},
-    {'icon': Icons.chat, 'title': '채팅', 'screen': const ChatApp()},
+    {'icon': Icons.chat, 'title': '채팅', 'screen': const LiveChatScreen()},
   ];
 
   void _navigateToScreen(Widget screen) {
     Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      appBar: AppBar(
-        title: const Text('Muse Mate'),
-      ),
+      appBar: AppBar(title: const Text('Muse Mate')),
       body: const MapScreen(),
     );
   }
