@@ -6,6 +6,7 @@ import 'package:muse_mate/widgets/player_state_section.dart';
 import 'package:muse_mate/widgets/source_input_section.dart';
 
 const List<String> _videoIds = [
+  'EY9uI5d3SIo',
   'tcodrIK2P_I',
   'H5v3kku4y6Q',
   'nPt8bK2gbaU',
@@ -51,7 +52,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       _controller.loadPlaylist(
         list: _videoIds,
         listType: ListType.playlist,
-        startSeconds: 136,
+        startSeconds: 0,
       );
     }
   }
