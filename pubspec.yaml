@@ -33,6 +33,11 @@ dependencies:
   cloud_firestore: ^5.6.2
   flutter_chat_ui: ^2.6.2 # For ready-made chat UI
   flutter_chat_core: ^2.0.0 # For chat logic
+  google_maps_flutter: ^2.5.0
+  google_maps_flutter_web: ^0.5.12+2
+  geolocator: ^11.0.0
+  permission_handler: ^11.2.0
+
   flutter:
     sdk: flutter
   http: ^1.2.1
@@ -40,6 +45,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  youtube_player_iframe: ^5.2.1
 
 dev_dependencies:
   flutter_test:

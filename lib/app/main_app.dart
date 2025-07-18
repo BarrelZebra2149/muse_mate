@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:muse_mate/screen/drop_music_screen.dart';
 import 'package:muse_mate/screen/open_streaming_screen.dart';
 import 'package:muse_mate/app/chat_app.dart';
+import 'package:muse_mate/screen/map_screen.dart';
+import 'package:muse_mate/screen/drop_music_screen_youtube.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -31,8 +33,13 @@ class _MyHomePageState extends State<MyHomePage> {
       'title': '스트리밍 열기',
       'screen': const OpenStreaming(),
     },
-    {'icon': Icons.arrow_drop_down, 'title': '드랍', 'screen': const DropMusicScreen()},
-    {'icon': Icons.chat, 'title': '채팅', 'screen': const ChatApp()},
+    {'icon': Icons.arrow_drop_down, 'title': '드랍', 'screen': const DropMusic()},
+    {'icon': Icons.chat, 'title': '채팅', 'screen': const LiveChatScreen()},
+    {
+      'icon': Icons.youtube_searched_for,
+      'title': '유튜브 플레이어',
+      'screen': const DropMusicYoutubeScreen(),
+    },
   ];
 
   void _navigateToScreen(Widget screen) {
@@ -66,7 +73,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      appBar: AppBar(),
+      appBar: AppBar(title: const Text('Muse Mate')),
+      body: const MapScreen(),
     );
   }
 }
