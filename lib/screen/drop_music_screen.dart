@@ -14,7 +14,7 @@ class _DropMusicScreenState extends State<DropMusicScreen> {
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;
 
-  final String apiKey = 'AIzaSyCruYkrDJ7pmSk6A6ZIgHutgHaiKxGu4vc';
+  final String apiKey = 'YOUR_API_KEY';
 
   Future<void> searchYouTube(String query) async {
     setState(() {
