@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "374418447070",
+    "project_id": "muse-mates",
+    "storage_bucket": "muse-mates.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374418447070:android:3071ba586c9dee6a11004f",
+        "android_client_info": {
+          "package_name": "com.example.muse_mate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9CoJRFLi9Fvdrhvp3_IjXzQcXjFmZuVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
