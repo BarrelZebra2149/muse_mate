@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class DropMusicScreen extends StatefulWidget {
-  const DropMusicScreen({super.key});
+class SearchYoutubeScreen extends StatefulWidget {
+  const SearchYoutubeScreen({super.key});
 
   @override
-  State<DropMusicScreen> createState() => _DropMusicScreenState();
+  State<SearchYoutubeScreen> createState() => _SearchYoutubeScreenState();
 }
 
-class _DropMusicScreenState extends State<DropMusicScreen> {
+class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;

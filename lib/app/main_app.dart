@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/drop_music_screen.dart';
+import 'package:muse_mate/screen/search_youtube_screen.dart';
 import 'package:muse_mate/screen/open_streaming_screen.dart';
 import 'package:muse_mate/app/chat_app.dart';
 import 'package:muse_mate/screen/map_screen.dart';
@@ -41,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       'icon': Icons.arrow_drop_down,
       'title': '드랍',
-      'screen': const DropMusicScreen(),
+      'screen': const SearchYoutubeScreen(),
     },
     {'icon': Icons.chat, 'title': '채팅', 'screen': const LiveChatScreen()},
     {
