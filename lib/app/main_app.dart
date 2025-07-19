@@ -26,6 +26,11 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class DropMusic {
+  // This class is a placeholder for the DropMusic functionality.
+  // You can implement the actual logic here if needed.
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   final List<Map<String, dynamic>> _menuItems = [
     {
@@ -33,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
       'title': '스트리밍 열기',
       'screen': const OpenStreaming(),
     },
-    {'icon': Icons.arrow_drop_down, 'title': '드랍', 'screen': const DropMusic()},
+    {'icon': Icons.arrow_drop_down, 'title': '드랍', 'screen': DropMusic()},
     {'icon': Icons.chat, 'title': '채팅', 'screen': const LiveChatScreen()},
     {
       'icon': Icons.youtube_searched_for,
