@@ -1,0 +1,126 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:muse_mate/screen/chat_screen.dart';
+
+
+class ChatroomListScreen extends StatefulWidget{
+  const ChatroomListScreen({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _ChatroomListScreenState();
+}
+
+class _ChatroomListScreenState extends State<ChatroomListScreen> {
+  Future<List<Map<String, dynamic>>> fetchChatRooms() async {
+    final firestore = FirebaseFirestore.instance;
+    final snapshot = await firestore
+        .collection('chatroomList')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  void createChatRoom() async {
+    final firestore = FirebaseFirestore.instance;
+
+    String? roomName = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        TextEditingController controller = TextEditingController();
+        return AlertDialog(
+          title: Text('채팅방 이름 입력'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(hintText: '방 이름'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (roomName != null && roomName.isNotEmpty) {
+      // chatroom_list에 새 문서 추가
+      final docRef = await firestore.collection('chatroomList').add({
+        'roomName': roomName,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // 하위 컬렉션 messages 생성 (예시로 첫 메시지 추가)
+      await docRef.collection('messages').add({
+        'text': '채팅방이 생성되었습니다.',
+        'createdAt': FieldValue.serverTimestamp(),
+        'userId': 'system',
+      });
+
+      // 화면 갱신
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('채팅방이 생성되었습니다!')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: fetchChatRooms(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text('No chat rooms found.'));
+              }
+              final chatRooms = snapshot.data!;
+              return Expanded(
+                child: ListView.builder(
+                  itemCount: chatRooms.length,
+                  itemBuilder: (context, index) {
+                    final chatRoom = chatRooms[index];
+                    return ListTile(
+                      title: Text(chatRoom['roomName'] ?? '이름없는 방'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MessageScreen(chatroomId: chatRoom['id']),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            }
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                createChatRoom();
+              },
+              child: Text('방 만들기'),
+            ),
+          ),
+        ],
+      )
+    );
+  }
+}

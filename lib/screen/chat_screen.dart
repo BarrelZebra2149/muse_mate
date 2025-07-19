@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class MessageScreen extends StatefulWidget {
-  const MessageScreen({super.key});
+  final String chatroomId;
+  const MessageScreen({super.key, required this.chatroomId});
 
   @override
   _MessageScreenState createState() => _MessageScreenState();
@@ -15,22 +16,31 @@ class _MessageScreenState extends State<MessageScreen> {
 
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
-    FirebaseFirestore.instance.collection('messages').add({
-      'text': _controller.text,
-      'createdAt': FieldValue.serverTimestamp(),
-      'userId': user?.uid,
-    });
+    FirebaseFirestore.instance
+        .collection('chatroomList')
+        .doc(widget.chatroomId)
+        .collection('messages')
+        .add({
+          'text': _controller.text,
+          'createdAt': FieldValue.serverTimestamp(),
+          'userId': user?.uid,
+        });
     _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Chat Room'),
+      ),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
+                  .collection('chatroomList')
+                  .doc(widget.chatroomId)
                   .collection('messages')
                   .orderBy('createdAt', descending: true)
                   .snapshots(),
