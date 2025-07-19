@@ -26,6 +26,11 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class DropMusic {
+  // This class is a placeholder for the DropMusic functionality.
+  // You can implement the actual logic here if needed.
+}
+
 class _MyHomePageState extends State<MyHomePage> {
   final List<Map<String, dynamic>> _menuItems = [
     {

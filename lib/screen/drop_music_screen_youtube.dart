@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/widgets/meta_data_section.dart';
@@ -6,6 +7,7 @@ import 'package:muse_mate/widgets/player_state_section.dart';
 import 'package:muse_mate/widgets/source_input_section.dart';
 
 const List<String> _videoIds = [
+  'EY9uI5d3SIo',
   'tcodrIK2P_I',
   'H5v3kku4y6Q',
   'nPt8bK2gbaU',
@@ -51,7 +53,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       _controller.loadPlaylist(
         list: _videoIds,
         listType: ListType.playlist,
-        startSeconds: 136,
+        startSeconds: 0,
       );
     }
   }
@@ -127,12 +129,120 @@ class Controls extends StatelessWidget {
           const VideoPositionSeeker(),
           _space,
           const PlayerStateSection(),
+          _space,
+          CircularProgressPlayerButton(
+            progress: 0.3,
+            isPlaying: true,
+            onPressed: () {},
+          ),
         ],
       ),
     );
   }
 
   Widget get _space => const SizedBox(height: 10);
+}
+
+/// 유튜브 로직이 분리된 순수 UI 위젯입니다.
+class CircularProgressPlayerButton extends StatelessWidget {
+  /// 위젯의 전체 크기
+  final double size;
+
+  /// 진행률 (0.0 ~ 1.0)
+  final double progress;
+
+  /// 재생중 여부 (아이콘 모양 결정)
+  final bool isPlaying;
+
+  /// 버튼을 눌렀을 때 실행될 콜백 함수
+  final VoidCallback onPressed;
+
+  const CircularProgressPlayerButton({
+    super.key,
+    required this.progress,
+    required this.isPlaying,
+    required this.onPressed,
+    this.size = 150.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 원형 진행률을 그리는 CustomPaint
+          CustomPaint(
+            size: Size.square(size),
+            painter: _ProgressArcPainter(
+              progress: progress.clamp(0.0, 1.0),
+              backgroundColor: Colors.white.withAlpha(51),
+              progressColor: const Color(0xFFB3A4EE),
+              strokeWidth: 8.0,
+            ),
+          ),
+          // 중앙의 아이콘 버튼
+          IconButton(
+            onPressed: onPressed,
+            icon: Icon(
+              isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.white,
+            ),
+            iconSize: size * 0.5,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// 원형 진행률을 그리는 CustomPainter
+class _ProgressArcPainter extends CustomPainter {
+  final double progress;
+  final Color backgroundColor;
+  final Color progressColor;
+  final double strokeWidth;
+
+  _ProgressArcPainter({
+    required this.progress,
+    required this.backgroundColor,
+    required this.progressColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+    const startAngle = -pi / 2;
+    final sweepAngle = progress * 2 * pi;
+
+    final backgroundPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    canvas.drawCircle(center, radius, backgroundPaint);
+
+    final progressPaint = Paint()
+      ..color = progressColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProgressArcPainter oldDelegate) {
+    return progress != oldDelegate.progress;
+  }
 }
 
 ///
