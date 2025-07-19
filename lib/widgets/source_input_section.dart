@@ -42,7 +42,6 @@ class _SourceInputSectionState extends State<SourceInputSection> {
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: _hint,
-              helperText: _helperText,
               fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               filled: true,
               hintStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
@@ -81,54 +80,14 @@ class _SourceInputSectionState extends State<SourceInputSection> {
                 );
               },
             ),
-            _Button(
-              action: 'Load Playlist',
-              onTap: _playlistType == null
-                  ? null
-                  : () {
-                      context.ytController.loadPlaylist(
-                        list: [_textController.text],
-                        listType: _playlistType!,
-                      );
-                    },
-            ),
-            _Button(
-              action: 'Cue Playlist',
-              onTap: _playlistType == null
-                  ? null
-                  : () {
-                      context.ytController.cuePlaylist(
-                        list: [_textController.text],
-                        listType: _playlistType!,
-                      );
-                    },
-            ),
           ],
         ),
       ],
     );
   }
 
-  String? get _helperText {
-    switch (_playlistType) {
-      case ListType.playlist:
-        return '"PLj0L3ZL0ijTdhFSueRKK-mLFAtDuvzdje", ...';
-      case ListType.userUploads:
-        return '"pewdiepie", "tseries"';
-      default:
-        return null;
-    }
-  }
-
   String get _hint {
-    switch (_playlistType) {
-      case ListType.playlist:
-        return 'Enter playlist id';
-      case ListType.userUploads:
-        return 'Enter channel name';
-      default:
-        return r'Enter youtube <video id> or <link>';
-    }
+    return r'Enter youtube <video id> or <link>';
   }
 
   String? _cleanId(String source) {

@@ -14,7 +14,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;
 
-  final String apiKey = 'AIzaSyCruYkrDJ7pmSk6A6ZIgHutgHaiKxGu4vc';
+  final String apiKey = 'YOUR_YOUTUBE_API_KEY'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
 
   Future<void> searchYouTube(String query) async {
     setState(() {
@@ -24,7 +24,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
 
     final url = Uri.parse(
       'https://www.googleapis.com/youtube/v3/search'
-      '?part=snippet&type=video&maxResults=10&q=${Uri.encodeComponent(query)}&key=$apiKey',
+      '?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${Uri.encodeComponent(query)}&key=$apiKey',
     );
 
     final response = await http.get(url);
