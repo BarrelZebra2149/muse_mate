@@ -11,58 +11,30 @@ class MetaDataSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return YoutubeValueBuilder(
-      buildWhen: (o, n) {
-        return o.metaData != n.metaData ||
-            o.playbackQuality != n.playbackQuality;
-      },
-      builder: (context, value) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _Text('Title', value.metaData.title),
-            const SizedBox(height: 10),
-            _Text('Channel', value.metaData.author),
-            const SizedBox(height: 10),
-            _Text('Playback Quality', value.playbackQuality ?? ''),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _Text('Video Id', value.metaData.videoId),
-                const Spacer(),
-                const _Text('Speed', ''),
-                YoutubeValueBuilder(
-                  builder: (context, value) {
-                    return DropdownButton(
-                      value: value.playbackRate,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      items: PlaybackRate.all
-                          .map(
-                            (rate) => DropdownMenuItem(
-                              value: rate,
-                              child: Text(
-                                '${rate}x',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (double? newValue) {
-                        if (newValue != null) {
-                          context.ytController.setPlaybackRate(newValue);
-                        }
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-        );
-      },
+    return Container(
+      height: 150,
+      alignment: Alignment.center,
+      child: YoutubeValueBuilder(
+        buildWhen: (o, n) {
+          return o.metaData != n.metaData ||
+              o.playbackQuality != n.playbackQuality;
+        },
+        builder: (context, value) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Text('Title', value.metaData.title),
+              const SizedBox(height: 10),
+              _Text('Channel', value.metaData.author),
+              const SizedBox(height: 10),
+              _Text('Playback Quality', value.playbackQuality ?? ''),
+              const SizedBox(height: 10),
+              Row(children: [_Text('Video Id', value.metaData.videoId)]),
+            ],
+          );
+        },
+      ),
     );
   }
 }
