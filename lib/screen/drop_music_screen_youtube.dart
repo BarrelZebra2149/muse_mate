@@ -31,6 +31,7 @@ class DropMusicYoutubeScreen extends StatefulWidget {
 
 class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
   late YoutubePlayerController _controller;
+  late String _currentVideoId;
 
   @override
   void initState() {
@@ -57,6 +58,14 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
         startSeconds: 0,
       );
     }
+  }
+
+  void _onVideoSelected(String newId) {
+    setState(() {
+      _currentVideoId = newId;
+      print(_currentVideoId);
+       _controller.loadVideoById(videoId: _currentVideoId);
+    });
   }
 
   @override
@@ -107,7 +116,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                                 constraints.maxHeight -
                                 kToolbarHeight -
                                 MediaQuery.of(context).padding.top,
-                            child: const SearchYoutubeScreen(),
+                            child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
                           ),
                         ),
                       ),
@@ -124,7 +133,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                     const Controls(),
                     SizedBox(
                       height: MediaQuery.of(context).size.height * 0.4,
-                      child: const SearchYoutubeScreen(),
+                      child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
                     ),
                   ],
                 ),
@@ -143,10 +152,15 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
   }
 }
 
-class Controls extends StatelessWidget {
+class Controls extends StatefulWidget {
   ///
   const Controls({super.key});
 
+  @override
+  State<Controls> createState() => _ControlsState();
+}
+
+class _ControlsState extends State<Controls> {
   @override
   Widget build(BuildContext context) {
     return Padding(

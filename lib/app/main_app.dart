@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/search_youtube_screen.dart';
 import 'package:muse_mate/screen/open_streaming_screen.dart';
 import 'package:muse_mate/app/chat_app.dart';
 import 'package:muse_mate/screen/map_screen.dart';
@@ -41,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       'icon': Icons.arrow_drop_down,
       'title': '드랍',
-      'screen': const SearchYoutubeScreen(),
+      'screen': const OpenStreaming(), //SearchYoutubeScreen 대신 임시로 OpenStreaming()으로 채워 넣음. 드랍용 페이지를 따로 만들어야 할듯?
     },
     {'icon': Icons.chat, 'title': '채팅', 'screen': const LiveChatScreen()},
     {

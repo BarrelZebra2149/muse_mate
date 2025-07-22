@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SearchYoutubeScreen extends StatefulWidget {
-  const SearchYoutubeScreen({super.key});
+  const SearchYoutubeScreen({super.key, required this.onVideoTap});
+  final void Function(String) onVideoTap;
 
   @override
   State<SearchYoutubeScreen> createState() => _SearchYoutubeScreenState();
@@ -13,8 +14,9 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;
+  String? videoId;
 
-  final String apiKey = 'YOUR_YOUTUBE_API_KEY'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
+  final String apiKey = 'AIzaSyCruYkrDJ7pmSk6A6ZIgHutgHaiKxGu4vc'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
 
   Future<void> searchYouTube(String query) async {
     setState(() {
@@ -84,7 +86,9 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
                       leading: Image.network(item['thumbnail'] ?? ''),
                       title: Text(item['title'] ?? ''),
                       subtitle: Text('videoId: ${item['videoId']}'),
-                      onTap: () {},
+                     onTap: () {
+                      widget.onVideoTap(item['videoId']);
+                    }
                     );
                   },
                 ),
