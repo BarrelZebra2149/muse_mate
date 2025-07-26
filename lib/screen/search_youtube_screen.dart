@@ -17,7 +17,8 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   bool isLoading = false;
   String? videoId;
 
-  final String apiKey = 'YOUTUBE_API_KEY'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
+  final String apiKey =
+      'AIzaSyAY8-c-FxftXtgkyum6VxKKOQmEXABr0_U'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
 
   Future<void> searchYouTube(String query) async {
     setState(() {
@@ -27,7 +28,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
 
     final url = Uri.parse(
       'https://www.googleapis.com/youtube/v3/search'
-          '?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${Uri.encodeComponent(query)}&key=$apiKey',
+      '?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${Uri.encodeComponent(query)}&key=$apiKey',
     );
 
     final response = await http.get(url);
@@ -96,18 +97,17 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DropMusicYoutubeScreen(videoId: item['videoId']),
+                            builder: (context) => DropMusicYoutubeScreen(
+                              videoId: item['videoId'],
+                            ),
                           ),
                         );
 
-                        Navigator.pop(
-                          context,
-                          {
-                            'videoId': item['videoId'],
-                            'title': item['title'],
-                            'thumbnail': item['thumbnail'],
-                          },
-                        );
+                        Navigator.pop(context, {
+                          'videoId': item['videoId'],
+                          'title': item['title'],
+                          'thumbnail': item['thumbnail'],
+                        });
                       },
                     );
                   },

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -41,7 +40,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _infoWindowPosition;
 
   // 마커 카운터 (고유 ID 생성용)
-  int _markerIdCounter = 0;
+  final int _markerIdCounter = 0;
 
   // 마커 ID와 소유자 ID를 매핑하는 Map 추가
   final Map<String, String> _markerOwners = {};
@@ -156,7 +155,8 @@ class _MapScreenState extends State<MapScreen> {
             position: _currentPosition,
             infoWindow: const InfoWindow(title: '내 위치', snippet: '현재 위치입니다'),
             icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueAzure),
+              BitmapDescriptor.hueAzure,
+            ),
           ),
         );
       });
@@ -259,7 +259,9 @@ class _MapScreenState extends State<MapScreen> {
                   // 유튜브 검색 화면으로 이동
                   final result = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SearchYoutubeScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const SearchYoutubeScreen(),
+                    ),
                   );
 
                   // 선택한 유튜브 비디오 정보 받아오기
@@ -268,9 +270,9 @@ class _MapScreenState extends State<MapScreen> {
 
                     // 새 다이얼로그 열기 (선택한 유튜브 정보로 미리 채워진)
                     _showAddMarkerDialogWithYoutube(
-                        position,
-                        result['videoId'],
-                        result['title']
+                      position,
+                      result['videoId'],
+                      result['title'],
                     );
                   }
                 },
@@ -297,9 +299,9 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('제목을 입력해주세요.')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('제목을 입력해주세요.')));
                 return;
               }
               Navigator.pop(context);
@@ -311,8 +313,12 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-// 유튜브 검색 결과로 마커 추가 다이얼로그
-  void _showAddMarkerDialogWithYoutube(LatLng position, String videoId, String videoTitle) {
+  // 유튜브 검색 결과로 마커 추가 다이얼로그
+  void _showAddMarkerDialogWithYoutube(
+    LatLng position,
+    String videoId,
+    String videoTitle,
+  ) {
     String title = videoTitle; // 유튜브 제목을 기본값으로 설정
     String description = '';
     String youtubeLink = 'https://www.youtube.com/watch?v=$videoId';
@@ -326,7 +332,9 @@ class _MapScreenState extends State<MapScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // 유튜브 썸네일 표시
-              Image.network('https://img.youtube.com/vi/$videoId/hqdefault.jpg'),
+              Image.network(
+                'https://img.youtube.com/vi/$videoId/hqdefault.jpg',
+              ),
               const SizedBox(height: 10),
               TextField(
                 decoration: const InputDecoration(labelText: '제목'),
@@ -377,9 +385,9 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('제목을 입력해주세요.')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('제목을 입력해주세요.')));
                 return;
               }
               Navigator.pop(context);
@@ -391,23 +399,26 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-// 커스텀 마커 추가
+  // 커스텀 마커 추가
   Future<void> _addCustomMarker({
     required LatLng position,
     required CustomMarkerInfo markerInfo,
   }) async {
     // 범위 내에 있는지 확인
     if (!_isMarkerWithinRange(position)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('설정된 범위를 벗어난 위치입니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('설정된 범위를 벗어난 위치입니다.')));
       return;
     }
 
-    final String markerId = 'custom_marker_${DateTime.now().millisecondsSinceEpoch}';
+    final String markerId =
+        'custom_marker_${DateTime.now().millisecondsSinceEpoch}';
 
     // 기본 마커 아이콘
-    BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
+    BitmapDescriptor markerIcon = BitmapDescriptor.defaultMarkerWithHue(
+      BitmapDescriptor.hueViolet,
+    );
 
     // 유튜브 링크가 있는 경우 썸네일을 마커 아이콘으로 사용
     if (markerInfo.youtubeLink != null && markerInfo.youtubeLink!.isNotEmpty) {
@@ -479,7 +490,9 @@ class _MapScreenState extends State<MapScreen> {
 
       setState(() {
         // 현재 위치 마커를 제외한 모든 마커 삭제
-        _markers.removeWhere((marker) => marker.markerId.value != 'currentLocation');
+        _markers.removeWhere(
+          (marker) => marker.markerId.value != 'currentLocation',
+        );
         _markerOwners.clear();
 
         // Firestore에서 가져온 마커 중 범위 내 마커만 추가
@@ -502,28 +515,32 @@ class _MapScreenState extends State<MapScreen> {
               if (imageUrl.isNotEmpty) {
                 icon = await getBitmapDescriptorFromNetworkImage(imageUrl);
               } else {
-                icon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
+                icon = BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueViolet,
+                );
               }
 
               setState(() {
-                _markers.add(Marker(
-                  markerId: MarkerId(markerId),
-                  position: markerPosition,
-                  icon: icon,
-                  onTap: () {
-                    setState(() {
-                      _selectedMarkerInfo = CustomMarkerInfo(
-                        title: data['title'] ?? '',
-                        description: data['description'] ?? '',
-                        imageUrl: imageUrl,
-                        youtubeLink: data['youtubeLink'],
-                      );
-                      _showInfoWindow = true;
-                      _infoWindowPosition = markerPosition;
-                      _selectedMarkerId = markerId;
-                    });
-                  },
-                ));
+                _markers.add(
+                  Marker(
+                    markerId: MarkerId(markerId),
+                    position: markerPosition,
+                    icon: icon,
+                    onTap: () {
+                      setState(() {
+                        _selectedMarkerInfo = CustomMarkerInfo(
+                          title: data['title'] ?? '',
+                          description: data['description'] ?? '',
+                          imageUrl: imageUrl,
+                          youtubeLink: data['youtubeLink'],
+                        );
+                        _showInfoWindow = true;
+                        _infoWindowPosition = markerPosition;
+                        _selectedMarkerId = markerId;
+                      });
+                    },
+                  ),
+                );
               });
             }
 
@@ -534,9 +551,9 @@ class _MapScreenState extends State<MapScreen> {
       });
     } catch (e) {
       print('마커 로드 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('마커 로드 중 오류가 발생했습니다: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('마커 로드 중 오류가 발생했습니다: $e')));
     }
   }
 
@@ -549,17 +566,17 @@ class _MapScreenState extends State<MapScreen> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : GoogleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition,
-              zoom: 15.0,
-            ),
-            markers: _markers,
-            circles: _circles, // 원 표시 추가
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-            onTap: _onMapTapped,
-          ),
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                    target: _currentPosition,
+                    zoom: 15.0,
+                  ),
+                  markers: _markers,
+                  circles: _circles, // 원 표시 추가
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  onTap: _onMapTapped,
+                ),
 
           // 커스텀 정보 창
           if (_showInfoWindow && _selectedMarkerInfo != null)
@@ -618,7 +635,9 @@ class _MapScreenState extends State<MapScreen> {
                       // 범위 원 표시/숨김 토글 버튼
                       IconButton(
                         icon: Icon(
-                          _showRangeCircle ? Icons.visibility : Icons.visibility_off,
+                          _showRangeCircle
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           size: 20,
                         ),
                         onPressed: _toggleRangeCircle,
@@ -627,15 +646,24 @@ class _MapScreenState extends State<MapScreen> {
                       // 빠른 범위 선택 버튼들
                       TextButton(
                         onPressed: () => _updateSearchRadius(500),
-                        child: const Text('500m', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          '500m',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                       TextButton(
                         onPressed: () => _updateSearchRadius(1000),
-                        child: const Text('1km', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          '1km',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                       TextButton(
                         onPressed: () => _updateSearchRadius(2000),
-                        child: const Text('2km', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          '2km',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
@@ -656,7 +684,9 @@ class _MapScreenState extends State<MapScreen> {
                 // 내 마커 관리 화면으로 이동
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MyMarkersScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const MyMarkersScreen(),
+                  ),
                 );
 
                 // 특정 마커 위치로 이동 (선택 사항)
@@ -695,7 +725,8 @@ class _MapScreenState extends State<MapScreen> {
 
   // 마커 정보 창 위젯 수정 - 소유자만 수정/삭제 버튼 표시
   Widget _buildCustomInfoWindow(BuildContext context) {
-    bool isOwner = _currentUser != null &&
+    bool isOwner =
+        _currentUser != null &&
         _selectedMarkerId != null &&
         _markerOwners[_selectedMarkerId] == _currentUser!.uid;
 
@@ -764,7 +795,8 @@ class _MapScreenState extends State<MapScreen> {
             ),
             const SizedBox(height: 8),
             // 유튜브 링크가 있을 경우 재생 버튼 추가
-            if (_selectedMarkerInfo!.youtubeLink != null && _selectedMarkerInfo!.youtubeLink!.isNotEmpty)
+            if (_selectedMarkerInfo!.youtubeLink != null &&
+                _selectedMarkerInfo!.youtubeLink!.isNotEmpty)
               ElevatedButton.icon(
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('유튜브 재생'),
@@ -774,13 +806,16 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 onPressed: () {
                   // 유튜브 동영상 ID 추출
-                  String? videoId = extractYoutubeVideoId(_selectedMarkerInfo!.youtubeLink);
+                  String? videoId = extractYoutubeVideoId(
+                    _selectedMarkerInfo!.youtubeLink,
+                  );
                   if (videoId != null) {
                     // 유튜브 플레이어 화면으로 이동
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DropMusicYoutubeScreen(videoId: videoId),
+                        builder: (context) =>
+                            DropMusicYoutubeScreen(videoId: videoId),
                       ),
                     );
                   } else {
@@ -828,86 +863,83 @@ class _MapScreenState extends State<MapScreen> {
 
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('정보 수정'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    decoration: const InputDecoration(labelText: '제목'),
-                    controller: TextEditingController(text: title),
-                    onChanged: (value) {
-                      title = value;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: '설명',
-                      alignLabelWithHint: true,
-                    ),
-                    controller: TextEditingController(text: description),
-                    maxLines: 3,
-                    onChanged: (value) {
-                      description = value;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  // 유튜브 링크 수정 필드 추가
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: '유튜브 링크 (선택사항)',
-                      hintText: 'https://www.youtube.com/watch?v=...',
-                      prefixIcon: Icon(Icons.music_note),
-                    ),
-                    controller: TextEditingController(text: youtubeLink),
-                    onChanged: (value) {
-                      youtubeLink = value;
-                    },
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
+      builder: (context) => AlertDialog(
+        title: const Text('정보 수정'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(labelText: '제목'),
+                controller: TextEditingController(text: title),
+                onChanged: (value) {
+                  title = value;
                 },
-                child: const Text('취소'),
               ),
-              TextButton(
-                onPressed: () {
-                  if (title.isNotEmpty) {
-                    setState(() {
-                      // 현재 선택된 마커 정보 업데이트
-                      _selectedMarkerInfo = CustomMarkerInfo(
-                        title: title,
-                        description: description.isNotEmpty
-                            ? description
-                            : '설명 없음',
-                        imageUrl: _selectedMarkerInfo!.imageUrl,
-                        youtubeLink: youtubeLink.isNotEmpty
-                            ? youtubeLink
-                            : null, // 유튜브 링크 업데이트
-                      );
-                    });
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('제목을 입력해주세요.')),
-                    );
-                  }
+              const SizedBox(height: 10),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: '설명',
+                  alignLabelWithHint: true,
+                ),
+                controller: TextEditingController(text: description),
+                maxLines: 3,
+                onChanged: (value) {
+                  description = value;
                 },
-                child: const Text('저장'),
+              ),
+              const SizedBox(height: 10),
+              // 유튜브 링크 수정 필드 추가
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: '유튜브 링크 (선택사항)',
+                  hintText: 'https://www.youtube.com/watch?v=...',
+                  prefixIcon: Icon(Icons.music_note),
+                ),
+                controller: TextEditingController(text: youtubeLink),
+                onChanged: (value) {
+                  youtubeLink = value;
+                },
               ),
             ],
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (title.isNotEmpty) {
+                setState(() {
+                  // 현재 선택된 마커 정보 업데이트
+                  _selectedMarkerInfo = CustomMarkerInfo(
+                    title: title,
+                    description: description.isNotEmpty ? description : '설명 없음',
+                    imageUrl: _selectedMarkerInfo!.imageUrl,
+                    youtubeLink: youtubeLink.isNotEmpty
+                        ? youtubeLink
+                        : null, // 유튜브 링크 업데이트
+                  );
+                });
+                Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('제목을 입력해주세요.')));
+              }
+            },
+            child: const Text('저장'),
+          ),
+        ],
+      ),
     );
   }
 
-// 현재 선택된 마커 삭제 - 권한 확인 추가
+  // 현재 선택된 마커 삭제 - 권한 확인 추가
   void _deleteCurrentMarker() {
     // 선택된 마커의 ID 확인
     String? markerIdToDelete;
@@ -928,9 +960,9 @@ class _MapScreenState extends State<MapScreen> {
     if (markerIdToDelete == null ||
         _currentUser == null ||
         markerOwnerId != _currentUser!.uid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('마커를 삭제할 권한이 없습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('마커를 삭제할 권한이 없습니다.')));
       return;
     }
 
@@ -950,7 +982,9 @@ class _MapScreenState extends State<MapScreen> {
           TextButton(
             onPressed: () {
               setState(() {
-                _markers.removeWhere((marker) => marker.markerId.value == markerIdToDelete);
+                _markers.removeWhere(
+                  (marker) => marker.markerId.value == markerIdToDelete,
+                );
                 _showInfoWindow = false;
               });
 
@@ -965,17 +999,20 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-// Firestore 콜렉션 참조
+  // Firestore 콜렉션 참조
   final CollectionReference markersCollection = FirebaseFirestore.instance
       .collection('markers');
 
-// Firestore에 마커 저장할 때 소유자 ID 추가
-  Future<void> _saveMarkerToFirestore(String markerId, LatLng position,
-      CustomMarkerInfo info) async {
+  // Firestore에 마커 저장할 때 소유자 ID 추가
+  Future<void> _saveMarkerToFirestore(
+    String markerId,
+    LatLng position,
+    CustomMarkerInfo info,
+  ) async {
     if (_currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('로그인이 필요합니다.')));
       return;
     }
 
@@ -992,21 +1029,21 @@ class _MapScreenState extends State<MapScreen> {
       });
     } catch (e) {
       print('마커 저장 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('마커 저장 중 오류가 발생했습니다: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('마커 저장 중 오류가 발생했습니다: $e')));
     }
   }
 
-// Firestore에서 마커 데이터 삭제
+  // Firestore에서 마커 데이터 삭제
   Future<void> _deleteMarkerFromFirestore(String markerId) async {
     try {
       await markersCollection.doc(markerId).delete();
     } catch (e) {
       print('마커 삭제 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('마커 삭제 중 오류가 발생했습니다: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('마커 삭제 중 오류가 발생했습니다: $e')));
     }
   }
 
@@ -1031,9 +1068,7 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-
-
-// 유튜브 링크에서 비디오 ID 추출
+  // 유튜브 링크에서 비디오 ID 추출
   String? extractYoutubeVideoId(String? url) {
     if (url == null || url.isEmpty) {
       return null;
@@ -1069,7 +1104,9 @@ String getYoutubeThumbnailUrl(String? videoId) {
 }
 
 // 네트워크 이미지 URL에서 BitmapDescriptor 생성
-Future<BitmapDescriptor> getBitmapDescriptorFromNetworkImage(String imageUrl) async {
+Future<BitmapDescriptor> getBitmapDescriptorFromNetworkImage(
+  String imageUrl,
+) async {
   if (imageUrl.isEmpty) {
     return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
   }
@@ -1085,7 +1122,9 @@ Future<BitmapDescriptor> getBitmapDescriptorFromNetworkImage(String imageUrl) as
       targetHeight: 120,
     );
     final ui.FrameInfo frameInfo = await codec.getNextFrame();
-    final ByteData? byteData = await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+    final ByteData? byteData = await frameInfo.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
 
     if (byteData != null) {
       final Uint8List resizedBytes = byteData.buffer.asUint8List();

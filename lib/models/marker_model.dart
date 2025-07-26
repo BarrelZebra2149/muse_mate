@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class MarkerModel {
   final String id;
   final double latitude;

@@ -173,7 +173,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                 child: Column(
                   children: [
                     invisiblePlayer,
-                    const CircularProgressPlayerButton(),
                     const Controls(),
                     MyPlayList(
                       playlist: _playlist,
@@ -215,13 +214,28 @@ class _ControlsState extends State<Controls> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircularProgressPlayerButton(),
-          _space,
-          const MetaDataSection(),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 750) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CircularProgressPlayerButton(),
+                _space,
+                const MetaDataSection(),
+              ],
+            );
+          } else {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CircularProgressPlayerButton(),
+                SizedBox(height: 16),
+                const MetaDataSection(),
+              ],
+            );
+          }
+        },
       ),
     );
   }
