@@ -44,6 +44,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
 
     // 초기 동영상을 로드.
     if (widget.videoId != null) {
+      _currentVideoId = widget.videoId!;
       _controller.loadVideoById(videoId: widget.videoId!);
     } else {
       _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
