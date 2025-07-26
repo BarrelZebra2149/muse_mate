@@ -16,7 +16,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   bool isLoading = false;
   String? videoId;
 
-  final String apiKey = 'YOUR_API_KEY'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
+  final String apiKey = 'AIzaSyAY8-c-FxftXtgkyum6VxKKOQmEXABr0_U'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
 
   Future<void> searchYouTube(String query) async {
     setState(() {

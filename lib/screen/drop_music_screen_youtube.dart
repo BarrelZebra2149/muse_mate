@@ -3,6 +3,7 @@
 // youtube_player_iframe 패키지를 사용하여 YouTube 동영상을 임베드, 재생목록 및 컨트롤을 위한 커스텀 위젯을 사용.
 
 import 'package:flutter/material.dart';
+import 'package:muse_mate/screen/live_streaming_room_screen.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/widgets/meta_data_section.dart';
 import 'package:muse_mate/widgets/circular_progress_player.dart';
@@ -11,8 +12,12 @@ import 'package:muse_mate/widgets/my_playlist.dart';
 
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
 class DropMusicYoutubeScreen extends StatefulWidget {
-  const DropMusicYoutubeScreen({super.key, this.videoId});
+  const DropMusicYoutubeScreen({super.key, this.videoId, required this.onTrackChanged, this.authority, this.lastTrackChangedTime});
   final String? videoId;
+  final void Function(String?) onTrackChanged;
+  final String? authority;
+  final DateTime? lastTrackChangedTime;
+
   @override
   State<DropMusicYoutubeScreen> createState() => _DropMusicYoutubeScreenState();
 }
@@ -23,8 +28,9 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
 
   // 재생목록은 각 동영상의 videoId와 title을 저장.
   final List<Map<String, dynamic>> _playlist = [
-    {'videoId': 'bautietoaBo', 'title': 'Designant. (Official Audio)【Arcaea】'},
+    //{'videoId': 'bautietoaBo', 'title': 'Designant. (Official Audio)【Arcaea】'},
   ];
+
   @override
   void initState() {
     super.initState();
@@ -42,12 +48,23 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       print('${isFullScreen ? 'Entered' : 'Exited'} Fullscreen.');
     });
 
-    // 초기 동영상을 로드.
-    if (widget.videoId != null) {
-      _controller.loadVideoById(videoId: widget.videoId!);
-    } else {
-      _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-      _controller.loadVideoById(videoId: _currentVideoId);
+    if(widget.authority == Authority.host){
+      // 초기 동영상을 로드.
+      if (widget.videoId != null) {
+        _controller.loadVideoById(videoId: widget.videoId!);
+      } else {
+        _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
+        _controller.loadVideoById(videoId: _currentVideoId);
+      }
+    }else{
+      if (widget.videoId != null) {
+        _controller.loadVideoById(videoId: widget.videoId!);
+      } else {
+        _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
+        _controller.loadVideoById(
+          videoId: _currentVideoId,
+        );
+      }
     }
 
     // 동영상이 끝나면 다음 동영상으로 이동.
@@ -56,6 +73,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
         _moveToNextVideo();
       }
     });
+
   }
 
   // 현재 동영상이 끝나면 재생목록의 다음 동영상으로 이동.
@@ -73,6 +91,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     setState(() {
       _currentVideoId = _playlist[nextIndex]['videoId'];
       _controller.loadVideoById(videoId: _currentVideoId);
+      widget.onTrackChanged(_currentVideoId);
     });
   }
 
@@ -83,6 +102,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       if (_playlist.length == 1) {
         _currentVideoId = newId;
         _controller.loadVideoById(videoId: _currentVideoId);
+        widget.onTrackChanged(_currentVideoId);
       }
     });
   }
@@ -95,6 +115,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       if (removedVideoId == _currentVideoId && _playlist.isNotEmpty) {
         _currentVideoId = _playlist.first['videoId'];
         _controller.loadVideoById(videoId: _currentVideoId);
+        widget.onTrackChanged(_currentVideoId);
       } else if (_playlist.isEmpty) {
         _currentVideoId = '';
         _controller.pauseVideo();
@@ -107,7 +128,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     return YoutubePlayerScaffold(
       controller: _controller,
       builder: (context, player) {
-        // 레이아웃을 위한 보이지 않는 플레이어 위젯.
         final invisiblePlayer = SizedBox(
           height: 0.1,
           width: 0.1,
@@ -115,13 +135,28 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
         );
 
         return Scaffold(
+          drawer: Drawer( // 검색창을 왼쪽 drawer에 넣음
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SearchYoutubeScreen(
+                  onVideoTap: _onVideoSelected,
+                ),
+              ),
+            ),
+          ),
           appBar: AppBar(
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.of(context).pop(); // 현재 화면 종료
+              },
+            ),
             title: const Text('Youtube Player IFrame Demo'),
             actions: const [VideoPlaylistIconButton()],
           ),
           body: LayoutBuilder(
             builder: (context, constraints) {
-              // 반응형 레이아웃: 넓은 화면에서는 Row, 좁은 화면에서는 Column을 사용.
               if (constraints.maxWidth > 750) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,28 +181,11 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                         ),
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            height:
-                                constraints.maxHeight -
-                                kToolbarHeight -
-                                MediaQuery.of(context).padding.top,
-                            child: SearchYoutubeScreen(
-                              onVideoTap: _onVideoSelected,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 );
               }
 
-              // 모바일 레이아웃.
+              // 모바일 레이아웃
               return SingleChildScrollView(
                 child: Column(
                   children: [
@@ -179,19 +197,26 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                       currentVideoId: _currentVideoId,
                       onRemove: _removeVideo,
                     ),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
-                    ),
+                    // 검색창은 drawer에서만 띄움
                   ],
                 ),
               );
             },
           ),
+          floatingActionButton: Builder(
+            builder: (context) => FloatingActionButton(
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              child: Icon(Icons.search),
+              tooltip: '동영상 검색',
+            ),
+          ),
         );
       },
     );
   }
+
 
   @override
   void dispose() {
