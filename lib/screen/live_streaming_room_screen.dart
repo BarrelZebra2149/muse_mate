@@ -2,7 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:muse_mate/screen/chat_screen.dart';
-import 'package:muse_mate/screen/drop_music_screen_youtube.dart';
+import 'package:muse_mate/screen/streaming_music_screen.dart';
 
 enum Authority { host, user }
 
@@ -30,7 +30,6 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
     setState(() {
       lastTrackChangedTime = DateTime.now();
     });
-    print('Track changed at $lastTrackChangedTime: $newVideoId');
     _sendLastTrackChangedTime(newVideoId!);
   }
 
@@ -44,46 +43,60 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
         });
   }
 
-  Future<DateTime?> _receiveLastTrackChangedTime() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('chatroomList')
-        .doc(widget.chatroomId)
-        .get();
+  void _receiveLastTrackChangedTime() async {
+  final doc = await FirebaseFirestore.instance
+      .collection('chatroomList')
+      .doc(widget.chatroomId)
+      .get();
 
-    if (!doc.exists) return null;
-
-    final data = doc.data();
-    if (data == null || !data.containsKey('lastTrackChangedTime')) return null;
-
-    final field = data['lastTrackChangedTime'];
-
-    if (field is Timestamp) {
-      return field.toDate();
-    } else if (field is String) {
-      return DateTime.tryParse(field);
-    }
-
-    return null;
+  if (!doc.exists) {
+    lastTrackChangedTime = DateTime.now();
+    return;
   }
 
-  Future<String?> _receiveVideoId() async {
-    final doc = await FirebaseFirestore.instance
-        .collection('chatroomList')
-        .doc(widget.chatroomId)
-        .get();
-
-    if (!doc.exists) return null;
-
-    final data = doc.data();
-    if (data == null || !data.containsKey('videoId')) return null;
-
-    final field = data['videoId'];
-    if (field is String) {
-      return field;
-    } else {
-      return field?.toString();
-    }
+  final data = doc.data();
+  if (data == null || !data.containsKey('lastTrackChangedTime')) {
+    lastTrackChangedTime = DateTime.now();
+    return;
   }
+
+  final field = data['lastTrackChangedTime'];
+
+  if (field is Timestamp) {
+    lastTrackChangedTime = field.toDate();
+  } else if (field is String) {
+    lastTrackChangedTime = DateTime.tryParse(field) ?? DateTime.now();
+  } else {
+    lastTrackChangedTime = DateTime.now();
+  }
+
+  return;
+}
+
+  void _receiveVideoId() async {
+  final doc = await FirebaseFirestore.instance
+      .collection('chatroomList')
+      .doc(widget.chatroomId)
+      .get();
+
+  if (!doc.exists) {
+    videoId = "bautietoaBo";
+    return;
+  }
+
+  final data = doc.data();
+  if (data == null || !data.containsKey('videoID')) {
+    videoId = "bautietoaBo";
+    return;
+  }
+
+  final field = data['videoID'];
+  if (field is String) {
+    videoId = field.isNotEmpty ? field : "bautietoaBo";
+  } else {
+    videoId = field?.toString() ?? "bautietoaBo";
+  }
+}
 
   Future<String?> fetchHostUserId(String roomId) async {
     final doc = await FirebaseFirestore.instance
@@ -98,43 +111,27 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _initAuthority();
-
-    //if(authority == Authority.user){
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _initData();
-      });
-    //}
-   
-  }
-
-  Future<void> _initData() async {
-    final time = await _receiveLastTrackChangedTime();
-    final vid = await _receiveVideoId();
-
-    if (!mounted) return;
-
-    setState(() {
-      lastTrackChangedTime = time;
-      videoId = vid;
-    });
- }
-
   Future<void> _initAuthority() async {
     final hostId = await fetchHostUserId(widget.chatroomId);
+    final auth = (hostId == widget.userId)
+        ? Authority.host.name
+        : Authority.user.name;
 
     setState(() {
-      authority = (hostId == widget.userId)
-          ? Authority.host.name
-          : Authority.user.name;
+      authority = auth;
     });
   }
 
   void openChatDrawer() {
     _scaffoldKey.currentState?.openEndDrawer(); // 오른쪽에서 drawer 열기
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initAuthority();
+    _receiveLastTrackChangedTime();
+    _receiveVideoId();
   }
 
   @override
@@ -149,16 +146,17 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
       ),
       body: Stack(
         children: [
-          DropMusicYoutubeScreen(
-            videoId: videoId,
+          StreamingMusicScreen(
+            videoId: videoId!,
             onTrackChanged: _onTrackChanged,
             authority: authority,
-            lastTrackChangedTime: lastTrackChangedTime,
-          ), // 메인 화면
+            lastTrackChangedTime: lastTrackChangedTime!,
+          ),
           Positioned(
             top: 40,
             right: 20,
             child: FloatingActionButton(
+              heroTag: 'chat_button_${widget.chatroomId}',
               mini: true,
               onPressed: openChatDrawer,
               child: Icon(Icons.chat),
