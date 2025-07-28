@@ -3,7 +3,6 @@
 // youtube_player_iframe 패키지를 사용하여 YouTube 동영상을 임베드, 재생목록 및 컨트롤을 위한 커스텀 위젯을 사용.
 
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/live_streaming_room_screen.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/widgets/meta_data_section.dart';
 import 'package:muse_mate/widgets/circular_progress_player.dart';
@@ -12,12 +11,8 @@ import 'package:muse_mate/widgets/my_playlist.dart';
 
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
 class DropMusicYoutubeScreen extends StatefulWidget {
-  const DropMusicYoutubeScreen({super.key, this.videoId, required this.onTrackChanged, this.authority, this.lastTrackChangedTime});
+  const DropMusicYoutubeScreen({super.key, this.videoId});
   final String? videoId;
-  final void Function(String?) onTrackChanged;
-  final String? authority;
-  final DateTime? lastTrackChangedTime;
-
   @override
   State<DropMusicYoutubeScreen> createState() => _DropMusicYoutubeScreenState();
 }
@@ -48,23 +43,13 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       print('${isFullScreen ? 'Entered' : 'Exited'} Fullscreen.');
     });
 
-    if(widget.authority == Authority.host){
-      // 초기 동영상을 로드.
-      if (widget.videoId != null) {
-        _controller.loadVideoById(videoId: widget.videoId!);
-      } else {
-        _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-        _controller.loadVideoById(videoId: _currentVideoId);
-      }
-    }else{
-      if (widget.videoId != null) {
-        _controller.loadVideoById(videoId: widget.videoId!);
-      } else {
-        _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-        _controller.loadVideoById(
-          videoId: _currentVideoId,
-        );
-      }
+    // 초기 동영상을 로드.
+    if (widget.videoId != null) {
+      _currentVideoId = widget.videoId!;
+      _controller.loadVideoById(videoId: widget.videoId!);
+    } else {
+      _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
+      _controller.loadVideoById(videoId: _currentVideoId);
     }
 
     // 동영상이 끝나면 다음 동영상으로 이동.
@@ -91,7 +76,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     setState(() {
       _currentVideoId = _playlist[nextIndex]['videoId'];
       _controller.loadVideoById(videoId: _currentVideoId);
-      widget.onTrackChanged(_currentVideoId);
     });
   }
 
@@ -102,7 +86,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       if (_playlist.length == 1) {
         _currentVideoId = newId;
         _controller.loadVideoById(videoId: _currentVideoId);
-        widget.onTrackChanged(_currentVideoId);
       }
     });
   }
@@ -115,7 +98,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       if (removedVideoId == _currentVideoId && _playlist.isNotEmpty) {
         _currentVideoId = _playlist.first['videoId'];
         _controller.loadVideoById(videoId: _currentVideoId);
-        widget.onTrackChanged(_currentVideoId);
       } else if (_playlist.isEmpty) {
         _currentVideoId = '';
         _controller.pauseVideo();

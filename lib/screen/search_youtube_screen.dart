@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'drop_music_screen_youtube.dart';
 
 class SearchYoutubeScreen extends StatefulWidget {
-  const SearchYoutubeScreen({super.key, required this.onVideoTap});
-  final void Function(String, String) onVideoTap;
+  final void Function(String, String)? onVideoTap;
+  const SearchYoutubeScreen({super.key, this.onVideoTap});
 
   @override
   State<SearchYoutubeScreen> createState() => _SearchYoutubeScreenState();
@@ -16,7 +17,8 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   bool isLoading = false;
   String? videoId;
 
-  final String apiKey = 'AIzaSyAY8-c-FxftXtgkyum6VxKKOQmEXABr0_U'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
+  final String apiKey =
+      'AIzaSyAY8-c-FxftXtgkyum6VxKKOQmEXABr0_U'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
 
   Future<void> searchYouTube(String query) async {
     setState(() {
@@ -87,7 +89,25 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
                       title: Text(item['title'] ?? ''),
                       subtitle: Text('videoId: ${item['videoId']}'),
                       onTap: () {
-                        widget.onVideoTap(item['videoId'], item['title']);
+                        // onVideoTap이 제공된 경우 호출
+                        if (widget.onVideoTap != null) {
+                          widget.onVideoTap!(item['videoId'], item['title']);
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DropMusicYoutubeScreen(
+                              videoId: item['videoId'],
+                            ),
+                          ),
+                        );
+
+                        Navigator.pop(context, {
+                          'videoId': item['videoId'],
+                          'title': item['title'],
+                          'thumbnail': item['thumbnail'],
+                        });
                       },
                     );
                   },
