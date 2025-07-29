@@ -5,14 +5,19 @@
 import 'package:flutter/material.dart';
 import 'package:muse_mate/screen/live_streaming_room_screen.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-import 'package:muse_mate/widgets/meta_data_section.dart';
 import 'package:muse_mate/widgets/circular_progress_player.dart';
 import 'package:muse_mate/screen/search_youtube_screen.dart';
 import 'package:muse_mate/widgets/my_playlist.dart';
 
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
 class StreamingMusicScreen extends StatefulWidget {
-  const StreamingMusicScreen({super.key, this.videoId, required this.onTrackChanged, this.authority, this.lastTrackChangedTime});
+  const StreamingMusicScreen({
+    super.key,
+    this.videoId,
+    required this.onTrackChanged,
+    this.authority,
+    this.lastTrackChangedTime,
+  });
   final String? videoId;
   final void Function(String?) onTrackChanged;
   final String? authority;
@@ -47,7 +52,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(
       params: const YoutubePlayerParams(
-        showControls: true,
+        showControls: false,
         mute: false,
         showFullscreenButton: true,
         loop: false,
@@ -60,7 +65,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
 
     print(widget.videoId);
 
-    if(widget.authority == Authority.host.name){
+    if (widget.authority == Authority.host.name) {
       // 초기 동영상을 로드.
       if (widget.videoId != null) {
         _currentVideoId = widget.videoId!;
@@ -69,22 +74,22 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
           startSeconds: getElapsedSecondsSinceLastTrack(),
         );
       } else {
-        _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-        _controller.loadVideoById(
-          videoId: _currentVideoId,
-        );
+        _currentVideoId = _playlist.isNotEmpty
+            ? _playlist.first['videoId']
+            : '';
+        _controller.loadVideoById(videoId: _currentVideoId);
       }
-    }else{
+    } else {
       if (widget.videoId != null) {
         _controller.loadVideoById(
           videoId: widget.videoId!,
-        startSeconds: getElapsedSecondsSinceLastTrack(),
+          startSeconds: getElapsedSecondsSinceLastTrack(),
         );
       } else {
-        _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-        _controller.loadVideoById(
-          videoId: _currentVideoId,
-        );
+        _currentVideoId = _playlist.isNotEmpty
+            ? _playlist.first['videoId']
+            : '';
+        _controller.loadVideoById(videoId: _currentVideoId);
       }
     }
 
@@ -94,7 +99,6 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
         _moveToNextVideo();
       }
     });
-
   }
 
   // 현재 동영상이 끝나면 재생목록의 다음 동영상으로 이동.
@@ -149,20 +153,19 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
     return YoutubePlayerScaffold(
       controller: _controller,
       builder: (context, player) {
-        final invisiblePlayer = SizedBox(
-          height: 0.1,
-          width: 0.1,
+        final customPlayer = SizedBox(
+          height: MediaQuery.of(context).size.height * 0.2,
+          width: MediaQuery.of(context).size.width,
           child: player,
         );
 
         return Scaffold(
-          drawer: Drawer( // 검색창을 왼쪽 drawer에 넣음
+          drawer: Drawer(
+            // 검색창을 왼쪽 drawer에 넣음
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SearchYoutubeScreen(
-                  onVideoTap: _onVideoSelected,
-                ),
+                child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
               ),
             ),
           ),
@@ -190,7 +193,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              invisiblePlayer,
+                              customPlayer,
                               const Controls(),
                               MyPlayList(
                                 playlist: _playlist,
@@ -210,8 +213,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
               return SingleChildScrollView(
                 child: Column(
                   children: [
-                    invisiblePlayer,
-                    const CircularProgressPlayerButton(),
+                    customPlayer,
                     const Controls(),
                     MyPlayList(
                       playlist: _playlist,
@@ -238,7 +240,6 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
     );
   }
 
-
   @override
   void dispose() {
     _controller.close();
@@ -262,11 +263,7 @@ class _ControlsState extends State<Controls> {
       padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircularProgressPlayerButton(),
-          _space,
-          const MetaDataSection(),
-        ],
+        children: [const CircularProgressPlayerButton()],
       ),
     );
   }

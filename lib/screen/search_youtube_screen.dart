@@ -1,7 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'drop_music_screen_youtube.dart';
+import 'package:muse_mate/config/api_config.dart'; // Import the config file
 
 class SearchYoutubeScreen extends StatefulWidget {
   final void Function(String, String)? onVideoTap;
@@ -15,10 +16,6 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;
-  String? videoId;
-
-  final String apiKey =
-      'AIzaSyAY8-c-FxftXtgkyum6VxKKOQmEXABr0_U'; // 당신의 YOUTUBE API 키를 여기에 입력하세요.
 
   Future<void> searchYouTube(String query) async {
     setState(() {
@@ -28,7 +25,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
 
     final url = Uri.parse(
       'https://www.googleapis.com/youtube/v3/search'
-      '?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${Uri.encodeComponent(query)}&key=$apiKey',
+      '?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${Uri.encodeComponent(query)}&key=${ApiConfig.youtubeApiKey}',
     );
 
     final response = await http.get(url);
@@ -59,7 +56,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('검색')),
+      appBar: AppBar(title: const Text('검색')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -69,7 +66,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
               decoration: InputDecoration(
                 labelText: '검색어를 입력하세요',
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: () => searchYouTube(_controller.text),
                 ),
               ),
@@ -77,7 +74,7 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
             ),
             const SizedBox(height: 16),
             if (isLoading)
-              CircularProgressIndicator()
+              const CircularProgressIndicator()
             else
               Expanded(
                 child: ListView.builder(
@@ -89,7 +86,6 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
                       title: Text(item['title'] ?? ''),
                       subtitle: Text('videoId: ${item['videoId']}'),
                       onTap: () {
-                        // onVideoTap이 제공된 경우 호출
                         if (widget.onVideoTap != null) {
                           widget.onVideoTap!(item['videoId'], item['title']);
                         }

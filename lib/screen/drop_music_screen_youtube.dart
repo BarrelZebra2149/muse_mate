@@ -4,7 +4,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-import 'package:muse_mate/widgets/meta_data_section.dart';
 import 'package:muse_mate/widgets/circular_progress_player.dart';
 import 'package:muse_mate/screen/search_youtube_screen.dart';
 import 'package:muse_mate/widgets/my_playlist.dart';
@@ -32,7 +31,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(
       params: const YoutubePlayerParams(
-        showControls: true,
+        showControls: false,
         mute: false,
         showFullscreenButton: true,
         loop: false,
@@ -58,7 +57,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
         _moveToNextVideo();
       }
     });
-
   }
 
   // 현재 동영상이 끝나면 재생목록의 다음 동영상으로 이동.
@@ -110,20 +108,19 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     return YoutubePlayerScaffold(
       controller: _controller,
       builder: (context, player) {
-        final invisiblePlayer = SizedBox(
-          height: 0.1,
-          width: 0.1,
+        final customPlayer = SizedBox(
+          height: MediaQuery.of(context).size.height * 0.2,
+          width: MediaQuery.of(context).size.width,
           child: player,
         );
 
         return Scaffold(
-          drawer: Drawer( // 검색창을 왼쪽 drawer에 넣음
+          drawer: Drawer(
+            // 검색창을 왼쪽 drawer에 넣음
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SearchYoutubeScreen(
-                  onVideoTap: _onVideoSelected,
-                ),
+                child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
               ),
             ),
           ),
@@ -135,7 +132,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
               },
             ),
             title: const Text('Youtube Player IFrame Demo'),
-            actions: const [VideoPlaylistIconButton()],
           ),
           body: LayoutBuilder(
             builder: (context, constraints) {
@@ -151,7 +147,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              invisiblePlayer,
+                              customPlayer,
                               const Controls(),
                               MyPlayList(
                                 playlist: _playlist,
@@ -171,7 +167,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
               return SingleChildScrollView(
                 child: Column(
                   children: [
-                    invisiblePlayer,
+                    customPlayer,
                     const Controls(),
                     MyPlayList(
                       playlist: _playlist,
@@ -197,7 +193,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       },
     );
   }
-
 
   @override
   void dispose() {
@@ -225,20 +220,12 @@ class _ControlsState extends State<Controls> {
           if (constraints.maxWidth > 750) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const CircularProgressPlayerButton(),
-                _space,
-                const MetaDataSection(),
-              ],
+              children: [const CircularProgressPlayerButton()],
             );
           } else {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const CircularProgressPlayerButton(),
-                SizedBox(height: 16),
-                const MetaDataSection(),
-              ],
+              children: [const CircularProgressPlayerButton()],
             );
           }
         },
@@ -247,22 +234,4 @@ class _ControlsState extends State<Controls> {
   }
 
   Widget get _space => const SizedBox(width: 30);
-}
-
-/// 앱바에서 재생목록 관련 동작을 위한 아이콘 버튼.
-class VideoPlaylistIconButton extends StatelessWidget {
-  ///
-  const VideoPlaylistIconButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = context.ytController;
-
-    return IconButton(
-      onPressed: () async {
-        controller.pauseVideo();
-      },
-      icon: const Icon(Icons.playlist_play_sharp),
-    );
-  }
 }
