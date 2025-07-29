@@ -40,13 +40,13 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       'icon': Icons.arrow_drop_down,
       'title': '드랍',
-      'screen': const OpenStreaming(), //SearchYoutubeScreen 대신 임시로 OpenStreaming()으로 채워 넣음. 드랍용 페이지를 따로 만들어야 할듯?
+      'screen': const OpenStreaming(), //소멸 예정
     },
     {'icon': Icons.chat, 'title': '채팅', 'screen': const LiveChatScreen()},
     {
       'icon': Icons.youtube_searched_for,
       'title': '유튜브 플레이어',
-      'screen': const DropMusicYoutubeScreen(),
+      'screen': const OpenStreaming(), //소멸 예정
     },
   ];
 

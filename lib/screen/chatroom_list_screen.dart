@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/chat_screen.dart';
-
+import 'package:muse_mate/screen/live_streaming_room_screen.dart';
 
 class ChatroomListScreen extends StatefulWidget{
   const ChatroomListScreen({super.key});
@@ -11,6 +11,8 @@ class ChatroomListScreen extends StatefulWidget{
 }
 
 class _ChatroomListScreenState extends State<ChatroomListScreen> {
+  final User? user = FirebaseAuth.instance.currentUser;
+
   Future<List<Map<String, dynamic>>> fetchChatRooms() async {
     final firestore = FirebaseFirestore.instance;
     final snapshot = await firestore
@@ -57,6 +59,7 @@ class _ChatroomListScreenState extends State<ChatroomListScreen> {
       final docRef = await firestore.collection('chatroomList').add({
         'roomName': roomName,
         'createdAt': FieldValue.serverTimestamp(),
+        'hostUserId': user?.uid,
       });
 
       // 하위 컬렉션 messages 생성 (예시로 첫 메시지 추가)
@@ -100,7 +103,10 @@ class _ChatroomListScreenState extends State<ChatroomListScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => MessageScreen(chatroomId: chatRoom['id']),
+                            builder: (context) => LiveStreamingRoomScreen(
+                              chatroomId: chatRoom['id'],
+                              userId: user!.uid,
+                            ),
                           ),
                         );
                       },
