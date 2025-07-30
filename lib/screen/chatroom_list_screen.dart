@@ -99,8 +99,8 @@ class _ChatroomListScreenState extends State<ChatroomListScreen> {
                     final chatRoom = chatRooms[index];
                     return ListTile(
                       title: Text(chatRoom['roomName'] ?? '이름없는 방'),
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => LiveStreamingRoomScreen(
@@ -109,6 +109,10 @@ class _ChatroomListScreenState extends State<ChatroomListScreen> {
                             ),
                           ),
                         );
+                        // LiveStreamingRoomScreen에서 pop(context, true) 했을 경우
+                        if (result == true) {
+                          setState(() {});
+                        }
                       },
                     );
                   },
