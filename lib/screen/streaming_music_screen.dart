@@ -52,6 +52,8 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
 
   @override
   void initState() {
+    print("sms");
+    print(widget.videoId);
     super.initState();
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(

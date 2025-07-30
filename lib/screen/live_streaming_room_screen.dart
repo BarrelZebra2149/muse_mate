@@ -9,11 +9,13 @@ enum Authority { host, user }
 class LiveStreamingRoomScreen extends StatefulWidget {
   final String chatroomId;
   final String userId;
+  final String? videoId;
 
   const LiveStreamingRoomScreen({
     super.key,
     required this.chatroomId,
     required this.userId,
+    this.videoId
   });
 
   @override
@@ -79,7 +81,7 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
     }
 
     // 기본값 적용
-    videoId ??= '02_46KCr04g';
+    videoId ??= widget.videoId;
     setState(() {}); // 값 변경 후 UI 갱신
   }
 
