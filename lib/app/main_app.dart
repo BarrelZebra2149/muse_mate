@@ -3,6 +3,7 @@ import 'package:muse_mate/screen/open_streaming_screen.dart';
 import 'package:muse_mate/app/chat_app.dart';
 import 'package:muse_mate/screen/map_screen.dart';
 import 'package:muse_mate/screen/drop_music_screen_youtube.dart';
+import 'package:muse_mate/screen/search_youtube_screen.dart';
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
@@ -46,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       'icon': Icons.youtube_searched_for,
       'title': '유튜브 플레이어',
-      'screen': const OpenStreaming(), //소멸 예정
+      'screen': const SearchYoutubeScreen(), //소멸 예정
     },
   ];
 

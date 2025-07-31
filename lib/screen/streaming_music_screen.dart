@@ -2,6 +2,7 @@
 // YouTube 동영상 재생, 재생목록 관리, 검색, 재생 컨트롤 기능을 제공.
 // youtube_player_iframe 패키지를 사용하여 YouTube 동영상을 임베드, 재생목록 및 컨트롤을 위한 커스텀 위젯을 사용.
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:muse_mate/screen/live_streaming_room_screen.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
@@ -17,11 +18,14 @@ class StreamingMusicScreen extends StatefulWidget {
     required this.onTrackChanged,
     this.authority,
     this.lastTrackChangedTime,
+    this.chatRoomId,
   });
+
   final String? videoId;
   final void Function(String?) onTrackChanged;
   final String? authority;
   final DateTime? lastTrackChangedTime;
+  final String? chatRoomId;
 
   @override
   State<StreamingMusicScreen> createState() => _StreamingMusicScreenState();
@@ -29,11 +33,11 @@ class StreamingMusicScreen extends StatefulWidget {
 
 class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
   late YoutubePlayerController _controller;
-  late String _currentVideoId = 'bautietoaBo';
+  late String _currentVideoId = '02_46KCr04g';
 
   // 재생목록은 각 동영상의 videoId와 title을 저장.
   final List<Map<String, dynamic>> _playlist = [
-    {'videoId': 'bautietoaBo', 'title': 'Designant. (Official Audio)【Arcaea】'},
+    {'videoId': '02_46KCr04g', 'title': 'zettai koakuma kodei'},
   ];
 
   double getElapsedSecondsSinceLastTrack() {
@@ -48,6 +52,8 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
 
   @override
   void initState() {
+    print("sms");
+    print(widget.videoId);
     super.initState();
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(
@@ -63,8 +69,6 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       print('${isFullScreen ? 'Entered' : 'Exited'} Fullscreen.');
     });
 
-    print(widget.videoId);
-
     if (widget.authority == Authority.host.name) {
       // 초기 동영상을 로드.
       if (widget.videoId != null) {
@@ -76,7 +80,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       } else {
         _currentVideoId = _playlist.isNotEmpty
             ? _playlist.first['videoId']
-            : '';
+            : '02_46KCr04g';
         _controller.loadVideoById(videoId: _currentVideoId);
       }
     } else {
@@ -153,12 +157,13 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
     return YoutubePlayerScaffold(
       controller: _controller,
       builder: (context, player) {
-        final customPlayer = SizedBox(
-          height: MediaQuery.of(context).size.height * 0.2,
-          width: MediaQuery.of(context).size.width,
-          child: player,
+        final customPlayer = Center(
+          child: SizedBox(
+            height:150,
+            width: 300, // 필요 시 너비 줄이기
+            child: player,
+          ),
         );
-
         return Scaffold(
           drawer: Drawer(
             // 검색창을 왼쪽 drawer에 넣음
@@ -172,7 +177,13 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
           appBar: AppBar(
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
-              onPressed: () {
+              onPressed: () async {
+                if (widget.authority == 'host') {
+                await FirebaseFirestore.instance
+                  .collection('chatroomList')
+                  .doc(widget.chatRoomId)
+                  .delete();
+                }
                 Navigator.of(context).pop(); // 현재 화면 종료
               },
             ),
@@ -208,7 +219,6 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
                   ],
                 );
               }
-
               // 모바일 레이아웃
               return SingleChildScrollView(
                 child: Column(
@@ -239,7 +249,6 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       },
     );
   }
-
   @override
   void dispose() {
     _controller.close();

@@ -9,11 +9,13 @@ enum Authority { host, user }
 class LiveStreamingRoomScreen extends StatefulWidget {
   final String chatroomId;
   final String userId;
+  final String? videoId;
 
   const LiveStreamingRoomScreen({
     super.key,
     required this.chatroomId,
     required this.userId,
+    this.videoId
   });
 
   @override
@@ -44,59 +46,44 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
   }
 
   void _receiveLastTrackChangedTime() async {
-  final doc = await FirebaseFirestore.instance
-      .collection('chatroomList')
-      .doc(widget.chatroomId)
-      .get();
+    final doc = await FirebaseFirestore.instance
+        .collection('chatroomList')
+        .doc(widget.chatroomId)
+        .get();
 
-  if (!doc.exists) {
-    lastTrackChangedTime = DateTime.now();
-    return;
+    final data = doc.data();
+    final field = data?['lastTrackChangedTime'];
+
+    if (field is Timestamp) {
+      lastTrackChangedTime = field.toDate();
+    } else if (field is String) {
+      lastTrackChangedTime = DateTime.tryParse(field);
+    }
+
+    // 기본값 적용
+    lastTrackChangedTime ??= DateTime.now();
+    setState(() {});
   }
-
-  final data = doc.data();
-  if (data == null || !data.containsKey('lastTrackChangedTime')) {
-    lastTrackChangedTime = DateTime.now();
-    return;
-  }
-
-  final field = data['lastTrackChangedTime'];
-
-  if (field is Timestamp) {
-    lastTrackChangedTime = field.toDate();
-  } else if (field is String) {
-    lastTrackChangedTime = DateTime.tryParse(field) ?? DateTime.now();
-  } else {
-    lastTrackChangedTime = DateTime.now();
-  }
-
-  return;
-}
 
   void _receiveVideoId() async {
-  final doc = await FirebaseFirestore.instance
-      .collection('chatroomList')
-      .doc(widget.chatroomId)
-      .get();
+    final doc = await FirebaseFirestore.instance
+        .collection('chatroomList')
+        .doc(widget.chatroomId)
+        .get();
 
-  if (!doc.exists) {
-    videoId = "bautietoaBo";
-    return;
-  }
+    final data = doc.data();
+    final field = data?['videoID'];
 
-  final data = doc.data();
-  if (data == null || !data.containsKey('videoID')) {
-    videoId = "bautietoaBo";
-    return;
-  }
+    if (field is String) {
+      videoId = field;
+    } else {
+      videoId = field?.toString();
+    }
 
-  final field = data['videoID'];
-  if (field is String) {
-    videoId = field.isNotEmpty ? field : "bautietoaBo";
-  } else {
-    videoId = field?.toString() ?? "bautietoaBo";
+    // 기본값 적용
+    videoId ??= widget.videoId;
+    setState(() {}); // 값 변경 후 UI 갱신
   }
-}
 
   Future<String?> fetchHostUserId(String roomId) async {
     final doc = await FirebaseFirestore.instance
@@ -136,7 +123,10 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+     if (videoId == null || lastTrackChangedTime == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return  Scaffold(
       key: _scaffoldKey,
       endDrawer: SizedBox(
         width: MediaQuery.of(context).size.width * 0.8,
@@ -151,6 +141,7 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
             onTrackChanged: _onTrackChanged,
             authority: authority,
             lastTrackChangedTime: lastTrackChangedTime!,
+            chatRoomId: widget.chatroomId,
           ),
           Positioned(
             top: 40,
