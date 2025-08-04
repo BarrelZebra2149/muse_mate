@@ -159,7 +159,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       builder: (context, player) {
         final customPlayer = Center(
           child: SizedBox(
-            height:150,
+            height: 150,
             width: 300, // 필요 시 너비 줄이기
             child: player,
           ),
@@ -170,7 +170,12 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
+                child: SearchYoutubeScreen(
+                  onVideoTap: (id, title) {
+                    _onVideoSelected(id, title);
+                    Navigator.of(context).pop(); // 검색 후 drawer 닫기
+                  },
+                ),
               ),
             ),
           ),
@@ -179,10 +184,10 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
               icon: Icon(Icons.arrow_back),
               onPressed: () async {
                 if (widget.authority == 'host') {
-                await FirebaseFirestore.instance
-                  .collection('chatroomList')
-                  .doc(widget.chatRoomId)
-                  .delete();
+                  await FirebaseFirestore.instance
+                      .collection('chatroomList')
+                      .doc(widget.chatRoomId)
+                      .delete();
                 }
                 Navigator.of(context).pop(); // 현재 화면 종료
               },
@@ -249,6 +254,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       },
     );
   }
+
   @override
   void dispose() {
     _controller.close();
