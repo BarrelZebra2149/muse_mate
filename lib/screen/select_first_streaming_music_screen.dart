@@ -8,10 +8,12 @@ class SelectFirstStreamingMusicScreen extends StatefulWidget {
   const SelectFirstStreamingMusicScreen({super.key});
 
   @override
-  State<SelectFirstStreamingMusicScreen> createState() => _SelectFirstStreamingMusicScreenState();
+  State<SelectFirstStreamingMusicScreen> createState() =>
+      _SelectFirstStreamingMusicScreenState();
 }
 
-class _SelectFirstStreamingMusicScreenState extends State<SelectFirstStreamingMusicScreen> {
+class _SelectFirstStreamingMusicScreenState
+    extends State<SelectFirstStreamingMusicScreen> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;
@@ -85,11 +87,11 @@ class _SelectFirstStreamingMusicScreenState extends State<SelectFirstStreamingMu
                       title: Text(item['title'] ?? ''),
                       subtitle: Text('videoId: ${item['videoId']}'),
                       onTap: () {
-  Navigator.pop(context, {
-    'videoId': item['videoId'],
-    'title': item['title'],
-    'thumbnail': item['thumbnail'],
-  });
+                        Navigator.pop(context, {
+                          'videoId': item['videoId'],
+                          'title': item['title'],
+                          'thumbnail': item['thumbnail'],
+                        });
 
                         Navigator.push(
                           context,

@@ -89,21 +89,6 @@ class _SearchYoutubeScreenState extends State<SearchYoutubeScreen> {
                         if (widget.onVideoTap != null) {
                           widget.onVideoTap!(item['videoId'], item['title']);
                         }
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DropMusicYoutubeScreen(
-                              videoId: item['videoId'],
-                            ),
-                          ),
-                        );
-
-                        Navigator.pop(context, {
-                          'videoId': item['videoId'],
-                          'title': item['title'],
-                          'thumbnail': item['thumbnail'],
-                        });
                       },
                     );
                   },
