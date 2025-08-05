@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'drop_music_screen_youtube.dart';
+import 'package:muse_mate/screen/youtube_search/drop_music_screen_youtube.dart';
 import 'package:muse_mate/config/api_config.dart'; // Import the config file
 
 class SelectFirstStreamingMusicScreen extends StatefulWidget {

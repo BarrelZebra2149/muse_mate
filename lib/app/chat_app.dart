@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:muse_mate/screen/chatroom_list_screen.dart';
+import 'package:muse_mate/screen/chat/chatroom_list.dart';
 
 class LiveChatScreen extends StatelessWidget {
   const LiveChatScreen({super.key});
@@ -18,7 +18,7 @@ class LiveChatScreen extends StatelessWidget {
         if (snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(title: const Text('Live Chat')),
-            body: const ChatroomListScreen(),
+            body: const ChatroomList(),
           );
         } else {
           return Scaffold(

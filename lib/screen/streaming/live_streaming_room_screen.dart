@@ -1,8 +1,8 @@
 //drop_music_screen을 메인으로 chat_screen, search_youtube_screen을 짜붙임.
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/chat_screen.dart';
-import 'package:muse_mate/screen/streaming_music_screen.dart';
+import 'package:muse_mate/screen/chat/chat_screen.dart';
+import 'package:muse_mate/screen/streaming/streaming_music_screen.dart';
 
 enum Authority { host, user }
 

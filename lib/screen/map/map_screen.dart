@@ -1,8 +1,8 @@
 // lib/screen/map_screen.dart
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/map_screen_mobile.dart';
-import 'package:muse_mate/screen/map_screen_web.dart';
+import 'package:muse_mate/screen/map/map_screen_mobile.dart';
+import 'package:muse_mate/screen/map/map_screen_web.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});

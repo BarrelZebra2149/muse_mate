@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:muse_mate/models/marker_model.dart';
-import 'package:muse_mate/screen/drop_music_screen_youtube.dart';
-import 'package:muse_mate/screen/map_screen_base.dart';
-import 'package:muse_mate/screen/search_youtube_screen.dart';
+import 'package:muse_mate/screen/youtube_search/drop_music_screen_youtube.dart';
+import 'package:muse_mate/screen/map/map_screen_base.dart';
+import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
 import 'package:muse_mate/service/location_service.dart';
 import 'package:muse_mate/service/youtube_service.dart';
 
