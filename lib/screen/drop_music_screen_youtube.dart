@@ -149,11 +149,11 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                             children: [
                               customPlayer,
                               const Controls(),
-                              MyPlayList(
-                                playlist: _playlist,
-                                currentVideoId: _currentVideoId,
-                                onRemove: _removeVideo,
-                              ),
+                              // MyPlayList(
+                              //   playlist: _playlist,
+                              //   currentVideoId: _currentVideoId,
+                              //   onRemove: _removeVideo,
+                              // ),
                             ],
                           ),
                         ),
@@ -169,11 +169,11 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                   children: [
                     customPlayer,
                     const Controls(),
-                    MyPlayList(
-                      playlist: _playlist,
-                      currentVideoId: _currentVideoId,
-                      onRemove: _removeVideo,
-                    ),
+                    // MyPlayList(
+                    //   playlist: _playlist,
+                    //   currentVideoId: _currentVideoId,
+                    //   onRemove: _removeVideo,
+                    // ),
                     // 검색창은 drawer에서만 띄움
                   ],
                 ),
