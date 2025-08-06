@@ -2,8 +2,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:muse_mate/screen/chat_screen.dart';
-import 'package:muse_mate/screen/streaming_music_screen.dart';
+import 'package:muse_mate/screen/chat/chat_screen.dart';
+import 'package:muse_mate/screen/streaming/streaming_music_screen.dart';
 
 
 class LiveStreamingRoomScreen extends StatefulWidget {

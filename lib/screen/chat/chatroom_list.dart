@@ -3,17 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:muse_mate/models/video_model.dart';
 import 'package:muse_mate/repository/chatroom_repository.dart';
-import 'package:muse_mate/screen/live_streaming_room_screen.dart';
-import 'package:muse_mate/screen/search_youtube_screen.dart';
+import 'package:muse_mate/screen/streaming/live_streaming_room_screen.dart';
+import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
 
 class ChatroomListScreen extends StatefulWidget {
   const ChatroomListScreen({super.key});
 
   @override
-  State<StatefulWidget> createState() => _ChatroomListScreenState();
+  State<StatefulWidget> createState() => _ChatroomListState();
 }
 
-class _ChatroomListScreenState extends State<ChatroomListScreen> {
+class _ChatroomListState extends State<ChatroomListScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   final chatroomRepo = ChatroomRepository();
 

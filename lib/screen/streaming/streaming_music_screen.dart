@@ -3,31 +3,56 @@
 // youtube_player_iframe 패키지를 사용하여 YouTube 동영상을 임베드, 재생목록 및 컨트롤을 위한 커스텀 위젯을 사용.
 
 import 'package:flutter/material.dart';
+import 'package:muse_mate/models/video_model.dart';
+import 'package:muse_mate/repository/chatroom_repository.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-import 'package:muse_mate/widgets/circular_progress_player.dart';
-import 'package:muse_mate/screen/search_youtube_screen.dart';
-import 'package:muse_mate/widgets/my_playlist.dart';
+import 'package:muse_mate/screen/streaming/circular_progress_player.dart';
+import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
+import 'package:muse_mate/screen/streaming/my_playlist.dart';
 
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
-class DropMusicYoutubeScreen extends StatefulWidget {
-  const DropMusicYoutubeScreen({super.key, this.videoId});
-  final String? videoId;
+class StreamingMusicScreen extends StatefulWidget {
+  const StreamingMusicScreen({
+    super.key,
+    required this.roomRef,
+  });
+
+  final dynamic roomRef;
+
   @override
-  State<DropMusicYoutubeScreen> createState() => _DropMusicYoutubeScreenState();
+  State<StreamingMusicScreen> createState() => _StreamingMusicScreenState();
 }
 
-class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
+class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
   late YoutubePlayerController _controller;
-  late String _currentVideoId;
+  VideoModel? _currentVideo;
+  final chatroomRepo = ChatroomRepository();
 
-  // 재생목록은 각 동영상의 videoId와 title을 저장.
-  final List<Map<String, dynamic>> _playlist = [
-    //{'videoId': 'bautietoaBo', 'title': 'Designant. (Official Audio)【Arcaea】'},
-  ];
+
+  // 초기 동영상을 로드.
+  loadVideo() async {
+    _currentVideo = await chatroomRepo.getNowPlayingVideo(widget.roomRef);
+    if (_currentVideo == null) {
+      setState(() {}); // 로딩 인디케이터 표시용
+      return;
+    }
+    
+    final elapsedSeconds = await chatroomRepo.getElapsedSecondsSinceLastTrack(widget.roomRef);
+
+    if (_currentVideo?.videoId != '') {
+      _controller.loadVideoById(
+        videoId: _currentVideo!.videoId,
+        startSeconds: elapsedSeconds,
+      );
+    }
+    setState((){});
+  }
+
 
   @override
   void initState() {
     super.initState();
+
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(
       params: const YoutubePlayerParams(
@@ -42,14 +67,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
       print('${isFullScreen ? 'Entered' : 'Exited'} Fullscreen.');
     });
 
-    // 초기 동영상을 로드.
-    if (widget.videoId != null) {
-      _currentVideoId = widget.videoId!;
-      _controller.loadVideoById(videoId: widget.videoId!);
-    } else {
-      _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-      _controller.loadVideoById(videoId: _currentVideoId);
-    }
+    loadVideo();
 
     // 동영상이 끝나면 다음 동영상으로 이동.
     _controller.listen((event) {
@@ -60,47 +78,44 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
   }
 
   // 현재 동영상이 끝나면 재생목록의 다음 동영상으로 이동.
-  void _moveToNextVideo() {
-    if (_playlist.isEmpty) {
-      _currentVideoId = '';
-      _controller.pauseVideo();
-      return;
-    }
-
-    final currentIndex = _playlist.indexWhere(
-      (video) => video['videoId'] == _currentVideoId,
+  void _moveToNextVideo() async {
+    _currentVideo = await chatroomRepo.playNextVideo(
+      _currentVideo,
+      widget.roomRef,
     );
-    final nextIndex = (currentIndex + 1) % _playlist.length;
-    setState(() {
-      _currentVideoId = _playlist[nextIndex]['videoId'];
-      _controller.loadVideoById(videoId: _currentVideoId);
-    });
+    setState((){}); // playlist에 현재 곡 반영하기 위해.
+
+    if (_currentVideo != null) {
+      _controller.loadVideoById(videoId: _currentVideo!.videoId);
+    } 
+    else {
+      _controller.pauseVideo();
+    }
   }
 
   // 새로운 동영상을 재생목록에 추가하고, 첫 번째 동영상이면 재생.
-  void _onVideoSelected(String newId, String title) {
-    setState(() {
-      _playlist.add({'videoId': newId, 'title': title});
-      if (_playlist.length == 1) {
-        _currentVideoId = newId;
-        _controller.loadVideoById(videoId: _currentVideoId);
-      }
-    });
+  void _onVideoSelected(VideoModel video) async {
+    int playlistCount = await chatroomRepo.addToPlaylist(video, widget.roomRef);
+
+    // 선택한 동영상이 플레이리스트의 첫번째일때.
+    if (playlistCount == 1) {
+      _currentVideo = await chatroomRepo.getNowPlayingVideo(widget.roomRef);
+      _controller.loadVideoById(videoId: _currentVideo!.videoId);
+      setState((){});
+    }
   }
 
-  // 재생목록에서 동영상을 제거합.
-  void _removeVideo(int index) {
-    setState(() {
-      final removedVideoId = _playlist[index]['videoId'];
-      _playlist.removeAt(index);
-      if (removedVideoId == _currentVideoId && _playlist.isNotEmpty) {
-        _currentVideoId = _playlist.first['videoId'];
-        _controller.loadVideoById(videoId: _currentVideoId);
-      } else if (_playlist.isEmpty) {
-        _currentVideoId = '';
-        _controller.pauseVideo();
-      }
-    });
+
+  // 재생목록에서 동영상을 제거함.
+  void _removeVideo(int index, VideoModel video) async {
+    if (video.videoRef == _currentVideo?.videoRef) {
+      _moveToNextVideo();
+      setState((){});
+      return;
+    }
+
+    await chatroomRepo.deleteFromPlaylist(video, index, widget.roomRef);
+    setState((){});
   }
 
   @override
@@ -108,30 +123,38 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     return YoutubePlayerScaffold(
       controller: _controller,
       builder: (context, player) {
-        final customPlayer = SizedBox(
-          height: MediaQuery.of(context).size.height * 0.2,
-          width: MediaQuery.of(context).size.width,
-          child: player,
+        final customPlayer = Center(
+          child: SizedBox(
+            height: 150,
+            width: 300, // 필요 시 너비 줄이기
+            child: player,
+          ),
         );
-
         return Scaffold(
           drawer: Drawer(
             // 검색창을 왼쪽 drawer에 넣음
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
+                child: SearchYoutubeScreen(
+                  onVideoTap: (id, title) {
+                    _onVideoSelected(VideoModel(videoId: id, title: title, videoRef: ''));
+                    Navigator.of(context).pop(); // 검색 후 drawer 닫기
+                  },
+                ),
               ),
             ),
           ),
           appBar: AppBar(
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
-              onPressed: () {
+              onPressed: () async {
+                chatroomRepo.deleteChatroomIfHost(widget.roomRef);
                 Navigator.of(context).pop(); // 현재 화면 종료
               },
             ),
             title: const Text('Youtube Player IFrame Demo'),
+            actions: const [VideoPlaylistIconButton()],
           ),
           body: LayoutBuilder(
             builder: (context, constraints) {
@@ -149,11 +172,12 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                             children: [
                               customPlayer,
                               const Controls(),
-                              // MyPlayList(
-                              //   playlist: _playlist,
-                              //   currentVideoId: _currentVideoId,
-                              //   onRemove: _removeVideo,
-                              // ),
+                              // if (_currentVideo != null)
+                                MyPlayList(
+                                  roomRef: widget.roomRef,
+                                  currentVideo: _currentVideo,
+                                  onRemove: _removeVideo,
+                                ),
                             ],
                           ),
                         ),
@@ -162,18 +186,18 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                   ],
                 );
               }
-
               // 모바일 레이아웃
               return SingleChildScrollView(
                 child: Column(
                   children: [
                     customPlayer,
                     const Controls(),
-                    // MyPlayList(
-                    //   playlist: _playlist,
-                    //   currentVideoId: _currentVideoId,
-                    //   onRemove: _removeVideo,
-                    // ),
+                    // if (_currentVideo != null)
+                      MyPlayList(
+                        roomRef: widget.roomRef,
+                        currentVideo: _currentVideo,
+                        onRemove: _removeVideo,
+                      ),
                     // 검색창은 drawer에서만 띄움
                   ],
                 ),
@@ -203,7 +227,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
 
 // 재생 컨트롤 및 메타데이터를 위한 위젯.
 class Controls extends StatefulWidget {
-  ///
+  
   const Controls({super.key});
 
   @override
@@ -215,23 +239,30 @@ class _ControlsState extends State<Controls> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 750) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [const CircularProgressPlayerButton()],
-            );
-          } else {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [const CircularProgressPlayerButton()],
-            );
-          }
-        },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [const CircularProgressPlayerButton()],
       ),
     );
   }
 
   Widget get _space => const SizedBox(width: 30);
+}
+
+// 앱바에서 재생목록 관련 동작을 위한 아이콘 버튼.
+class VideoPlaylistIconButton extends StatelessWidget {
+  
+  const VideoPlaylistIconButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.ytController;
+
+    return IconButton(
+      onPressed: () async {
+        controller.pauseVideo();
+      },
+      icon: const Icon(Icons.playlist_play_sharp),
+    );
+  }
 }

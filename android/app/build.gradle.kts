@@ -1,3 +1,7 @@
+import java.util.Properties
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import org.gradle.api.GradleException
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -7,6 +11,28 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val dotenv = Properties()
+
+val envFile = file("${rootProject.projectDir}/../lib/config/.env")
+val localPropertiesFile = rootProject.file("local.properties")
+
+val localProperties = Properties()
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.reader().use { reader ->
+        localProperties.load(reader)
+    }
+}
+
+
+if (envFile.exists()) {
+    FileInputStream(envFile).use { inputStream ->
+        dotenv.load(inputStream)
+    }
+} else {
+    throw FileNotFoundException("Could not find .env file at: ${envFile.path}")
+}
+
 
 android {
     namespace = "com.example.muse_mate"
@@ -31,6 +57,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        val googleKey = dotenv["GOOGLE_MAPS_API_KEY"] as? String
+        if (googleKey == null) {
+            throw GradleException("GOOGLE_MAPS_APP_KEY not found in .env file")
+        }
+        manifestPlaceholders["MAPS_API_KEY"] = googleKey
     }
 
     buildTypes {
