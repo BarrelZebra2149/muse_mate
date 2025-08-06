@@ -18,7 +18,7 @@ class LiveChatScreen extends StatelessWidget {
         if (snapshot.hasData) {
           return Scaffold(
             appBar: AppBar(title: const Text('Live Chat')),
-            body: const ChatroomListScreen(),
+            body: const ChatroomList(),
           );
         } else {
           return Scaffold(

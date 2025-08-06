@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/screen/streaming/circular_progress_player.dart';
 
+
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
 class DropMusicYoutubeScreen extends StatefulWidget {
   const DropMusicYoutubeScreen({super.key, this.videoId});
@@ -47,7 +48,7 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
     });
   }
 
-
+  
   @override
   Widget build(BuildContext context) {
     return YoutubePlayerScaffold(

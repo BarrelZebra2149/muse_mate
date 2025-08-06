@@ -22,7 +22,6 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final User? user = FirebaseAuth.instance.currentUser;
 
-
   void openChatDrawer() {
     _scaffoldKey.currentState?.openEndDrawer(); // 오른쪽에서 drawer 열기
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:muse_mate/repository/chatroom_repository.dart';
 
 class MessageScreen extends StatefulWidget {
@@ -12,15 +13,19 @@ class MessageScreen extends StatefulWidget {
 }
 
 class _MessageScreenState extends State<MessageScreen> {
+
   final chatroomRepo = ChatroomRepository();
+
   final TextEditingController _controller = TextEditingController();
   final User? user = FirebaseAuth.instance.currentUser;
 
   void _sendMessage() {
+
     String message = _controller.text.trim();
     if (message.isEmpty) return;
 
     chatroomRepo.addMessage(message, widget.roomRef);
+
     _controller.clear();
   }
 
@@ -28,6 +33,7 @@ class _MessageScreenState extends State<MessageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Chat Room')),
+
       body: Column(
         children: [
           Expanded(

@@ -13,6 +13,7 @@ class ChatroomListScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _ChatroomListState();
 }
 
+
 class _ChatroomListState extends State<ChatroomListScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   final chatroomRepo = ChatroomRepository();
@@ -44,6 +45,7 @@ class _ChatroomListState extends State<ChatroomListScreen> {
         );
       },
     );
+
 
     // Firestore에 채팅방 생성
     if (roomName != null && roomName.isNotEmpty) {
