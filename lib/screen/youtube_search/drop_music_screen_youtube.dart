@@ -5,8 +5,6 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/screen/streaming/circular_progress_player.dart';
-import 'search_youtube_screen.dart';
-import 'package:muse_mate/screen/streaming/my_playlist.dart';
 
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
 class DropMusicYoutubeScreen extends StatefulWidget {
@@ -18,12 +16,6 @@ class DropMusicYoutubeScreen extends StatefulWidget {
 
 class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
   late YoutubePlayerController _controller;
-  late String _currentVideoId;
-
-  // 재생목록은 각 동영상의 videoId와 title을 저장.
-  final List<Map<String, dynamic>> _playlist = [
-    //{'videoId': 'bautietoaBo', 'title': 'Designant. (Official Audio)【Arcaea】'},
-  ];
 
   @override
   void initState() {
@@ -44,64 +36,17 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
 
     // 초기 동영상을 로드.
     if (widget.videoId != null) {
-      _currentVideoId = widget.videoId!;
       _controller.loadVideoById(videoId: widget.videoId!);
-    } else {
-      _currentVideoId = _playlist.isNotEmpty ? _playlist.first['videoId'] : '';
-      _controller.loadVideoById(videoId: _currentVideoId);
-    }
+    } 
 
     // 동영상이 끝나면 다음 동영상으로 이동.
     _controller.listen((event) {
       if (event.playerState == PlayerState.ended) {
-        _moveToNextVideo();
-      }
-    });
-  }
-
-  // 현재 동영상이 끝나면 재생목록의 다음 동영상으로 이동.
-  void _moveToNextVideo() {
-    if (_playlist.isEmpty) {
-      _currentVideoId = '';
-      _controller.pauseVideo();
-      return;
-    }
-
-    final currentIndex = _playlist.indexWhere(
-      (video) => video['videoId'] == _currentVideoId,
-    );
-    final nextIndex = (currentIndex + 1) % _playlist.length;
-    setState(() {
-      _currentVideoId = _playlist[nextIndex]['videoId'];
-      _controller.loadVideoById(videoId: _currentVideoId);
-    });
-  }
-
-  // 새로운 동영상을 재생목록에 추가하고, 첫 번째 동영상이면 재생.
-  void _onVideoSelected(String newId, String title) {
-    setState(() {
-      _playlist.add({'videoId': newId, 'title': title});
-      if (_playlist.length == 1) {
-        _currentVideoId = newId;
-        _controller.loadVideoById(videoId: _currentVideoId);
-      }
-    });
-  }
-
-  // 재생목록에서 동영상을 제거합.
-  void _removeVideo(int index) {
-    setState(() {
-      final removedVideoId = _playlist[index]['videoId'];
-      _playlist.removeAt(index);
-      if (removedVideoId == _currentVideoId && _playlist.isNotEmpty) {
-        _currentVideoId = _playlist.first['videoId'];
-        _controller.loadVideoById(videoId: _currentVideoId);
-      } else if (_playlist.isEmpty) {
-        _currentVideoId = '';
         _controller.pauseVideo();
       }
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -115,15 +60,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
         );
 
         return Scaffold(
-          drawer: Drawer(
-            // 검색창을 왼쪽 drawer에 넣음
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SearchYoutubeScreen(onVideoTap: _onVideoSelected),
-              ),
-            ),
-          ),
           appBar: AppBar(
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
@@ -149,11 +85,6 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                             children: [
                               customPlayer,
                               const Controls(),
-                              // MyPlayList(
-                              //   playlist: _playlist,
-                              //   currentVideoId: _currentVideoId,
-                              //   onRemove: _removeVideo,
-                              // ),
                             ],
                           ),
                         ),
@@ -169,25 +100,10 @@ class _DropMusicYoutubeScreenState extends State<DropMusicYoutubeScreen> {
                   children: [
                     customPlayer,
                     const Controls(),
-                    // MyPlayList(
-                    //   playlist: _playlist,
-                    //   currentVideoId: _currentVideoId,
-                    //   onRemove: _removeVideo,
-                    // ),
-                    // 검색창은 drawer에서만 띄움
                   ],
                 ),
               );
             },
-          ),
-          floatingActionButton: Builder(
-            builder: (context) => FloatingActionButton(
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-              child: Icon(Icons.search),
-              tooltip: '동영상 검색',
-            ),
           ),
         );
       },
@@ -232,6 +148,4 @@ class _ControlsState extends State<Controls> {
       ),
     );
   }
-
-  Widget get _space => const SizedBox(width: 30);
 }

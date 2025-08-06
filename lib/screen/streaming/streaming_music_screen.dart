@@ -245,8 +245,6 @@ class _ControlsState extends State<Controls> {
       ),
     );
   }
-
-  Widget get _space => const SizedBox(width: 30);
 }
 
 // 앱바에서 재생목록 관련 동작을 위한 아이콘 버튼.
