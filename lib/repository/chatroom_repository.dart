@@ -52,7 +52,7 @@ class ChatroomRepository {
   }
 
   // 호스트라면 방 삭제 가능
-  Future<void> deleteChatroomIfHost(dynamic roomRef) async {
+  Future<void> deleteChatroomIfHost(DocumentReference roomRef) async {
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       print('current user is null');
@@ -62,20 +62,27 @@ class ChatroomRepository {
     dynamic chatroomData = snapshot.data();
     
     if (currentUser.uid == chatroomData['hostUserId']) {
-      roomRef.delete();
-    }
-  }
+      final batch = firestore.batch();
 
-  Future<void> deleteChatroom(dynamic roomRef) async { 
-    final subcollections = await roomRef.listCollections();
-    for (final subcollection in subcollections) {
-      final snapshots = await subcollection.get();
-      for (final doc in snapshots.docs) {
-        await doc.reference.delete();
+      try {
+        final messagesSnapshot = await roomRef.collection(chatroomMessages).get();
+        for (final doc in messagesSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+
+        final songsSnapshot = await roomRef.collection(songs).get();
+        for (final doc in songsSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+
+        batch.delete(roomRef);
+
+        await batch.commit();
+      }
+      catch (e) {
+        print('문서 삭제 중 오류 발생 : $e');
       }
     }
-
-    roomRef.delete();
   }
 
 
