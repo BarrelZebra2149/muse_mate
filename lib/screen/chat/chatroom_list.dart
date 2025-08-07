@@ -1,36 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:muse_mate/models/video_model.dart';
+import 'package:muse_mate/repository/chatroom_repository.dart';
 import 'package:muse_mate/screen/streaming/live_streaming_room_screen.dart';
-import 'package:muse_mate/screen/streaming/select_first_streaming_music_screen.dart';
+import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
 
-class ChatroomList extends StatefulWidget {
-  const ChatroomList({super.key});
+class ChatroomListScreen extends StatefulWidget {
+  const ChatroomListScreen({super.key});
 
   @override
   State<StatefulWidget> createState() => _ChatroomListState();
 }
 
-class _ChatroomListState extends State<ChatroomList> {
+
+class _ChatroomListState extends State<ChatroomListScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
+  final chatroomRepo = ChatroomRepository();
 
-  Future<List<Map<String, dynamic>>> fetchChatRooms() async {
-    final firestore = FirebaseFirestore.instance;
-    final snapshot = await firestore
-        .collection('chatroomList')
-        .orderBy('createdAt', descending: true)
-        .get();
-
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      data['id'] = doc.id;
-      return data;
-    }).toList();
-  }
 
   void createChatRoom() async {
-    final firestore = FirebaseFirestore.instance;
-
     String? roomName = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -57,47 +46,42 @@ class _ChatroomListState extends State<ChatroomList> {
       },
     );
 
-    if (roomName != null && roomName.isNotEmpty) {
-      // Firestore에 채팅방 생성
-      final docRef = await firestore.collection('chatroomList').add({
-        'roomName': roomName,
-        'createdAt': FieldValue.serverTimestamp(),
-        'hostUserId': user?.uid,
-      });
 
-      // 기본 메시지 추가
-      await docRef.collection('messages').add({
-        'text': '채팅방이 생성되었습니다.',
-        'createdAt': FieldValue.serverTimestamp(),
-        'userId': 'system',
-      });
+    // Firestore에 채팅방 생성
+    if (roomName != null && roomName.isNotEmpty) {
+      final roomRef = await chatroomRepo.addChatroom(roomName, user!);
 
       // YouTube 검색 화면 띄우기 (검색 결과 선택되면 값 받아옴)
       final result = await Navigator.push<Map<String, dynamic>>(
         context,
         MaterialPageRoute(
-          builder: (_) => const SelectFirstStreamingMusicScreen(),
+          builder: (_) => SearchYoutubeScreen(
+            onVideoTap: (String videoId, String title) {
+              Navigator.pop(context, 
+                {'videoId': videoId, 
+                'title': title}
+              );
+            },
+          ),
           fullscreenDialog: true,
         ),
       );
 
       if (result != null && result['videoId'] != null) {
-        final String videoId = result['videoId'];
-        FirebaseFirestore.instance
-            .collection('chatroomList')
-            .doc(docRef.id)
-            .update({
-              'lastTrackChangedTime': DateTime.now(),
-              'videoID': result['videoId'],
-            });
+        final VideoModel video = VideoModel(
+          videoId: result['videoId'], 
+          title: result['title'], 
+          videoRef: ''
+        );
+        
+        await chatroomRepo.addToPlaylist(video, roomRef);
+
         // LiveStreamingRoomScreen으로 이동
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => LiveStreamingRoomScreen(
-              chatroomId: docRef.id,
-              videoId: videoId,
-              userId: user!.uid,
+              roomRef: roomRef,
             ),
           ),
         );
@@ -116,30 +100,34 @@ class _ChatroomListState extends State<ChatroomList> {
     return Scaffold(
       body: Column(
         children: [
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: fetchChatRooms(),
+          StreamBuilder<QuerySnapshot>(
+            stream: chatroomRepo.getChatroomListSnapshot(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (!snapshot.hasData) {
                 return Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              
+              final chatRoomDocs = snapshot.data!.docs;
+              if (chatRoomDocs.isEmpty) {
                 return Center(child: Text('No chat rooms found.'));
               }
-              final chatRooms = snapshot.data!;
+
               return Expanded(
                 child: ListView.builder(
-                  itemCount: chatRooms.length,
+                  itemCount: chatRoomDocs.length,
                   itemBuilder: (context, index) {
-                    final chatRoom = chatRooms[index];
+                    final chatRoomDoc = chatRoomDocs[index];
+                    final chatRoomData = chatRoomDoc.data() as Map<String, dynamic>;;
+                    chatRoomData['ref'] = chatRoomDoc.reference;
+
                     return ListTile(
-                      title: Text(chatRoom['roomName'] ?? '이름없는 방'),
+                      title: Text(chatRoomData['roomName'] ?? '이름없는 방'),
                       onTap: () async {
                         final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => LiveStreamingRoomScreen(
-                              chatroomId: chatRoom['id'],
-                              userId: user!.uid,
+                              roomRef: chatRoomData['ref'],
                             ),
                           ),
                         );

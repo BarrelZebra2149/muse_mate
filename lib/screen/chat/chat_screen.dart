@@ -2,48 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:muse_mate/repository/chatroom_repository.dart';
+
 class MessageScreen extends StatefulWidget {
-  final String chatroomId;
-  const MessageScreen({super.key, required this.chatroomId});
+  final dynamic roomRef;
+  const MessageScreen({super.key, required this.roomRef});
 
   @override
   _MessageScreenState createState() => _MessageScreenState();
 }
 
 class _MessageScreenState extends State<MessageScreen> {
+
+  final chatroomRepo = ChatroomRepository();
+
   final TextEditingController _controller = TextEditingController();
   final User? user = FirebaseAuth.instance.currentUser;
 
   void _sendMessage() {
-    if (_controller.text.trim().isEmpty) return;
-    FirebaseFirestore.instance
-        .collection('chatroomList')
-        .doc(widget.chatroomId)
-        .collection('messages')
-        .add({
-          'text': _controller.text,
-          'createdAt': FieldValue.serverTimestamp(),
-          'userId': user?.uid,
-        });
+
+    String message = _controller.text.trim();
+    if (message.isEmpty) return;
+
+    chatroomRepo.addMessage(message, widget.roomRef);
+
     _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Chat Room'),
-      ),
+      appBar: AppBar(title: Text('Chat Room')),
+
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chatroomList')
-                  .doc(widget.chatroomId)
-                  .collection('messages')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
+              stream: widget.roomRef
+                            .collection('messages')
+                            .orderBy('createdAt', descending: true)
+                            .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return Center(child: CircularProgressIndicator());
