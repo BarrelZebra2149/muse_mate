@@ -112,6 +112,7 @@ class _ChatroomListState extends State<ChatroomListScreen> {
                       final chatRoomDoc = chatRoomDocs[index];
                       final chatRoomData =
                           chatRoomDoc.data() as Map<String, dynamic>;
+                      ;
                       chatRoomData['ref'] = chatRoomDoc.reference;
 
                       return ListTile(

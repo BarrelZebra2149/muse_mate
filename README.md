@@ -1,16 +1,70 @@
-# muse_mate
+# 🎶 MuseMates
 
-A new Flutter project.
+> **Connect through music.**  
+> 디지털 시대에 단절된 인간관계를 음악을 매개로 다시 연결하는 모바일 애플리케이션.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 📌 프로젝트 개요
 
-A few resources to get you started if this is your first Flutter project:
+**MuseMates**는 온라인/오프라인에서 음악을 중심으로 새로운 사람들과 자연스럽게 소통할 수 있는 플랫폼입니다.  
+장르별 라이브 채팅방, 1:1 대화, 위치 기반 ‘음악 보물찾기’ 기능을 통해  
+사용자와 인디 작곡가가 함께 음악을 소비·창작하는 생태계를 제공합니다.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠 개발 정보
+
+- **개발 플랫폼**: [Flutter](https://flutter.dev/) (크로스 플랫폼 모바일 앱)
+- **음악 스트리밍**: [Spotify API](https://developer.spotify.com/) 연동
+- **실시간 소통**: [Firebase](https://firebase.google.com/) 기반 1:1 채팅 & 장르별 라이브 채팅방
+- **위치 기반 콘텐츠**: [Google Maps API](https://developers.google.com/maps) 활용 ‘음악 보물찾기’
+
+---
+
+## 🎯 주요 기능
+
+### 💬 실시간 소통
+- 장르별 라이브 채팅방에서 같은 음악 취향을 가진 사람들과 대화
+- 1:1 채팅 기능을 통한 깊이 있는 교류
+
+### 🗺 음악 보물찾기
+- 위치 기반으로 숨겨진 음악을 탐색
+- 현실 공간에서 음악을 발견하며 리워드 경험
+
+### 👩‍🎤 인디 작곡가 지원
+- 곡을 소개하고 청취자와 직접 소통
+- 실시간 피드백을 통한 창작 동기 강화
+- 보물찾기 기능으로 자연스러운 음악 홍보
+
+---
+
+## 📈 기대 효과
+
+### 👥 사용자 측
+1. **감성 중심 실시간 교류** — 음악과 대화를 통한 공감 기반 관계 형성  
+2. **새로운 커뮤니티 경험** — 장르별 채팅과 1:1 대화로 취향 공유  
+3. **‘듣는 것’에서 ‘찾는 것’으로** — 몰입형 활동과 리워드 제공
+
+### 🎼 창작자 측
+1. **자유로운 음악 공유와 피드백** — 곡 소개 및 청취자 소통  
+2. **색다른 홍보 방식** — ‘보물찾기’로 자연스러운 곡 노출
+
+---
+
+## 📍 향후 계획
+- 추천 알고리즘 기반 친구/음악 매칭
+- 이벤트성 ‘한정 보물찾기’ 콘텐츠
+- 라이브 공연/스트리밍 연계 기능
+
+---
+
+## 🤝 기여하기
+
+MuseMates 프로젝트에 기여하려면 [기여 가이드](./CONTRIBUTING.md)를 참고해주세요.  
+이슈 제안, 기능 추가, 버그 수정 등 다양한 형태의 기여를 환영합니다. 🎉
+
+---
+
+## 📜 라이선스
+이 프로젝트는 [MIT License](./LICENSE) 하에 배포됩니다.
