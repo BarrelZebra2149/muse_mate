@@ -13,11 +13,9 @@ class ChatroomListScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _ChatroomListState();
 }
 
-
 class _ChatroomListState extends State<ChatroomListScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   final chatroomRepo = ChatroomRepository();
-
 
   void createChatRoom() async {
     String? roomName = await showDialog<String>(
@@ -46,7 +44,6 @@ class _ChatroomListState extends State<ChatroomListScreen> {
       },
     );
 
-
     // Firestore에 채팅방 생성
     if (roomName != null && roomName.isNotEmpty) {
       final roomRef = await chatroomRepo.addChatroom(roomName, user!);
@@ -57,10 +54,7 @@ class _ChatroomListState extends State<ChatroomListScreen> {
         MaterialPageRoute(
           builder: (_) => SearchYoutubeScreen(
             onVideoTap: (String videoId, String title) {
-              Navigator.pop(context, 
-                {'videoId': videoId, 
-                'title': title}
-              );
+              Navigator.pop(context, {'videoId': videoId, 'title': title});
             },
           ),
           fullscreenDialog: true,
@@ -69,20 +63,18 @@ class _ChatroomListState extends State<ChatroomListScreen> {
 
       if (result != null && result['videoId'] != null) {
         final VideoModel video = VideoModel(
-          videoId: result['videoId'], 
-          title: result['title'], 
-          videoRef: ''
+          videoId: result['videoId'],
+          title: result['title'],
+          videoRef: '',
         );
-        
+
         await chatroomRepo.addToPlaylist(video, roomRef);
 
         // LiveStreamingRoomScreen으로 이동
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => LiveStreamingRoomScreen(
-              roomRef: roomRef,
-            ),
+            builder: (_) => LiveStreamingRoomScreen(roomRef: roomRef),
           ),
         );
       }
@@ -98,60 +90,63 @@ class _ChatroomListState extends State<ChatroomListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: chatroomRepo.getChatroomListSnapshot(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
-              }
-              
-              final chatRoomDocs = snapshot.data!.docs;
-              if (chatRoomDocs.isEmpty) {
-                return Center(child: Text('No chat rooms found.'));
-              }
+      body: SafeArea(
+        child: Column(
+          children: [
+            StreamBuilder<QuerySnapshot>(
+              stream: chatroomRepo.getChatroomListSnapshot(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
-              return Expanded(
-                child: ListView.builder(
-                  itemCount: chatRoomDocs.length,
-                  itemBuilder: (context, index) {
-                    final chatRoomDoc = chatRoomDocs[index];
-                    final chatRoomData = chatRoomDoc.data() as Map<String, dynamic>;;
-                    chatRoomData['ref'] = chatRoomDoc.reference;
+                final chatRoomDocs = snapshot.data!.docs;
+                if (chatRoomDocs.isEmpty) {
+                  return Center(child: Text('No chat rooms found.'));
+                }
 
-                    return ListTile(
-                      title: Text(chatRoomData['roomName'] ?? '이름없는 방'),
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LiveStreamingRoomScreen(
-                              roomRef: chatRoomData['ref'],
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: chatRoomDocs.length,
+                    itemBuilder: (context, index) {
+                      final chatRoomDoc = chatRoomDocs[index];
+                      final chatRoomData =
+                          chatRoomDoc.data() as Map<String, dynamic>;
+                      chatRoomData['ref'] = chatRoomDoc.reference;
+
+                      return ListTile(
+                        title: Text(chatRoomData['roomName'] ?? '이름없는 방'),
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LiveStreamingRoomScreen(
+                                roomRef: chatRoomData['ref'],
+                              ),
                             ),
-                          ),
-                        );
-                        // LiveStreamingRoomScreen에서 pop(context, true) 했을 경우
-                        if (result == true) {
-                          setState(() {});
-                        }
-                      },
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ElevatedButton(
-              onPressed: () {
-                createChatRoom();
+                          );
+                          // LiveStreamingRoomScreen에서 pop(context, true) 했을 경우
+                          if (result == true) {
+                            setState(() {});
+                          }
+                        },
+                      );
+                    },
+                  ),
+                );
               },
-              child: Text('방 만들기'),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  createChatRoom();
+                },
+                child: Text('방 만들기'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
