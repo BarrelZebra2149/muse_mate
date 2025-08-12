@@ -1,26 +1,29 @@
-// lib/service/marker_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:muse_mate/models/marker_model.dart';
-import 'package:muse_mate/service/youtube_service.dart';
 import 'package:muse_mate/service/location_service.dart';
 
 class MarkerService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   // Firestore 컬렉션 참조
-  CollectionReference get markersCollection => 
-      _firestore.collection('markers');
-  
+  CollectionReference get markersCollection => _firestore.collection('markers');
+
   // 현재 사용자 가져오기
   User? get currentUser => _auth.currentUser;
 
   // 마커가 범위 내에 있는지 확인
-  bool isMarkerWithinRange(LatLng currentPosition, LatLng markerPosition, double searchRadius) {
-    double distance = LocationService.calculateDistance(currentPosition, markerPosition);
+  bool isMarkerWithinRange(
+    LatLng currentPosition,
+    LatLng markerPosition,
+    double searchRadius,
+  ) {
+    double distance = LocationService.calculateDistance(
+      currentPosition,
+      markerPosition,
+    );
     return distance <= searchRadius;
   }
 
@@ -39,8 +42,10 @@ class MarkerService {
   Future<void> saveMarkerToFirestore(
     String markerId,
     LatLng position,
-    CustomMarkerInfo info,
-  ) async {
+    CustomMarkerInfo info, {
+    bool isPrivate = false,
+    String? privatePw,
+  }) async {
     if (currentUser == null) {
       throw Exception('로그인이 필요합니다');
     }
@@ -55,6 +60,8 @@ class MarkerService {
         'youtubeLink': info.youtubeLink,
         'ownerId': currentUser!.uid,
         'createdAt': FieldValue.serverTimestamp(),
+        'isPrivate': isPrivate,
+        if (isPrivate && privatePw != null) 'privatePw': privatePw,
       });
     } catch (e) {
       print('마커 저장 오류: $e');
@@ -75,15 +82,24 @@ class MarkerService {
   // Firestore에서 마커 업데이트
   Future<void> updateMarkerInFirestore(
     String markerId,
-    CustomMarkerInfo info,
-  ) async {
+    CustomMarkerInfo info, {
+    bool isPrivate = false,
+    String? privatePw,
+  }) async {
     try {
-      await markersCollection.doc(markerId).update({
+      final updateData = {
         'title': info.title,
         'description': info.description,
         'youtubeLink': info.youtubeLink,
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+        'isPrivate': isPrivate,
+        if (isPrivate && privatePw != null) 'privatePw': privatePw,
+      };
+      // privatePw가 null인 경우 필드 제거
+      if (!isPrivate) {
+        updateData['privatePw'] = FieldValue.delete();
+      }
+      await markersCollection.doc(markerId).update(updateData);
     } catch (e) {
       print('마커 업데이트 오류: $e');
       throw e;

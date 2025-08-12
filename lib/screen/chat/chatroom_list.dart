@@ -14,11 +14,9 @@ class ChatroomListScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _ChatroomListState();
 }
 
-
 class _ChatroomListState extends State<ChatroomListScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
   final chatroomRepo = ChatroomRepository();
-
 
   void createChatRoom() async {
     String? roomName = await showDialog<String>(
@@ -60,8 +58,7 @@ class _ChatroomListState extends State<ChatroomListScreen> {
     if (position == null) {
       return;
     }
-
-
+    
     // Firestore에 채팅방 생성
     final roomRef = await chatroomRepo.addChatroom(roomName, position, user!);
 
@@ -111,27 +108,29 @@ class _ChatroomListState extends State<ChatroomListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: chatroomRepo.getChatroomListSnapshot(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
-              }
-              
-              final chatRoomDocs = snapshot.data!.docs;
-              if (chatRoomDocs.isEmpty) {
-                return Center(child: Text('No chat rooms found.'));
-              }
+      body: SafeArea(
+        child: Column(
+          children: [
+            StreamBuilder<QuerySnapshot>(
+              stream: chatroomRepo.getChatroomListSnapshot(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
-              return Expanded(
-                child: ListView.builder(
-                  itemCount: chatRoomDocs.length,
-                  itemBuilder: (context, index) {
-                    final chatRoomDoc = chatRoomDocs[index];
-                    final chatRoomData = chatRoomDoc.data() as Map<String, dynamic>;;
-                    chatRoomData['ref'] = chatRoomDoc.reference;
+                final chatRoomDocs = snapshot.data!.docs;
+                if (chatRoomDocs.isEmpty) {
+                  return Center(child: Text('No chat rooms found.'));
+                }
+
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: chatRoomDocs.length,
+                    itemBuilder: (context, index) {
+                      final chatRoomDoc = chatRoomDocs[index];
+                      final chatRoomData =
+                          chatRoomDoc.data() as Map<String, dynamic>;
+                      chatRoomData['ref'] = chatRoomDoc.reference;
 
                     return ListTile(
                       title: Text(chatRoomData['roomName'] ?? '이름없는 방'),
@@ -157,10 +156,18 @@ class _ChatroomListState extends State<ChatroomListScreen> {
               onPressed: () {
                 createChatRoom();
               },
-              child: Text('방 만들기'),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  createChatRoom();
+                },
+                child: Text('방 만들기'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
