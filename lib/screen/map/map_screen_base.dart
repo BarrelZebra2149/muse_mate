@@ -5,7 +5,6 @@ import 'package:muse_mate/models/marker_model.dart';
 import 'package:muse_mate/service/location_service.dart';
 import 'package:muse_mate/service/marker_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 abstract class MapScreenBase extends StatefulWidget {
   const MapScreenBase({super.key});
@@ -15,7 +14,7 @@ abstract class MapScreenBaseState<T extends MapScreenBase> extends State<T> {
   // 공통 서비스 인스턴스
   final MarkerService markerService = MarkerService();
   final FirebaseAuth auth = FirebaseAuth.instance;
-  
+
   // 공통 상태 변수
   User? currentUser;
   GoogleMapController? mapController;
@@ -30,21 +29,21 @@ abstract class MapScreenBaseState<T extends MapScreenBase> extends State<T> {
   double searchRadius = 1000.0;
   Set<Circle> circles = {};
   bool showRangeCircle = true;
-  
+
   // 공통 메서드 선언
   void getCurrentUser();
   Future<void> getCurrentLocation();
   void onMapCreated(GoogleMapController controller);
   Future<void> loadMarkersFromFirestore();
   Future<void> addCustomMarker({
-    required LatLng position, 
+    required LatLng position,
     required CustomMarkerInfo markerInfo,
   });
-  
+
   // 모든 자식 클래스에서 구현해야 하는 추상 메서드
   void onMapTapped(LatLng position);
   void showAddMarkerDialog(LatLng position);
-  
+
   // 공통 UI 구성 요소 메서드
   Widget buildCustomInfoWindow(BuildContext context);
   Widget buildRangeControls();
