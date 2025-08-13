@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:muse_mate/models/video_model.dart';
 
 class ChatroomRepository {
@@ -28,17 +29,19 @@ class ChatroomRepository {
     return snapshot.docs.map((doc) {
       final data = doc.data();
       data['ref'] = doc.reference;
+      data['id'] = doc.id;
       return data;
     }).toList();
   }
 
   // 채팅방 생성
-  Future<dynamic> addChatroom(String roomName, User host) async {
+  Future<dynamic> addChatroom(String roomName, Position position, User host) async {
     final roomRef = await firestore.collection(chatrooms).add({
       'roomName': roomName,
       'createdAt': FieldValue.serverTimestamp(),
       'hostUserId': host.uid,
       'playlist': [],
+      'hostLocation': GeoPoint(position.latitude, position.longitude),
     });
 
     // 기본 메시지 추가
@@ -49,6 +52,12 @@ class ChatroomRepository {
     });
 
     return roomRef;
+  }
+
+  void updateHostLocation(Position position, DocumentReference roomRef) {
+    roomRef.update({
+      'hostLocation': GeoPoint(position.latitude, position.longitude),
+    });
   }
 
   // 호스트라면 방 삭제 가능

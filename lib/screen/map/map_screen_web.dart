@@ -1,7 +1,11 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:muse_mate/models/marker_model.dart';
+import 'package:muse_mate/repository/chatroom_repository.dart';
+import 'package:muse_mate/screen/streaming/live_streaming_room_screen.dart';
+import 'package:muse_mate/screen/streaming/streaming_music_screen.dart';
 import 'package:muse_mate/screen/youtube_search/drop_music_screen_youtube.dart';
 import 'package:muse_mate/screen/map/management_markers_screen.dart';
 import 'package:muse_mate/screen/map/map_screen_base.dart';
@@ -67,6 +71,7 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
             icon: BitmapDescriptor.defaultMarkerWithHue(
               BitmapDescriptor.hueAzure,
             ),
+            zIndexInt: -1,
           ),
         );
       });
@@ -225,79 +230,73 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
     try {
       final docs = await markerService.loadMarkersFromFirestore();
 
-      setState(() {
-        // 현재 위치 마커를 제외한 모든 마커 삭제
-        markers.removeWhere(
-          (marker) => marker.markerId.value != 'currentLocation',
-        );
-        markerOwners.clear();
+      // 현재 위치 마커를 제외한 모든 마커 삭제
+      markers.removeWhere(
+            (marker) => marker.markerId.value != 'currentLocation',
+      );
+      markerOwners.clear();
 
-        // Firestore에서 가져온 마커 중 범위 내 마커만 추가
-        for (var doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final markerId = doc.id;
-          final double latitude = data['latitude'] ?? 0.0;
-          final double longitude = data['longitude'] ?? 0.0;
-          final LatLng markerPosition = LatLng(latitude, longitude);
-          final String ownerId = data['ownerId'] ?? '';
-          final String imageUrl = data['imageUrl'] ?? '';
+      // Firestore에서 가져온 마커 중 범위 내 마커만 추가
+      for (var doc in docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final markerId = doc.id;
+        final double latitude = data['latitude'] ?? 0.0;
+        final double longitude = data['longitude'] ?? 0.0;
+        final LatLng markerPosition = LatLng(latitude, longitude);
+        final String ownerId = data['ownerId'] ?? '';
+        final String imageUrl = data['imageUrl'] ?? '';
 
-          // 범위 내에 있는 마커만 추가
-          if (markerService.isMarkerWithinRange(
-            currentPosition,
-            markerPosition,
-            searchRadius,
-          )) {
-            // 소유자 정보 저장
-            markerOwners[markerId] = ownerId;
+        // 범위 내에 있는 마커만 추가
+        if (markerService.isMarkerWithinRange(currentPosition, markerPosition, searchRadius)) {
+          // 소유자 정보 저장
+          markerOwners[markerId] = ownerId;
 
-            Future<void> createMarker() async {
-              BitmapDescriptor icon;
-              if (imageUrl.isNotEmpty) {
-                icon = await YoutubeService.getBitmapDescriptorFromNetworkImage(
-                  imageUrl,
-                );
-              } else {
-                icon = BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueViolet,
-                );
-              }
-
-              setState(() {
-                markers.add(
-                  Marker(
-                    markerId: MarkerId(markerId),
-                    position: markerPosition,
-                    icon: icon,
-                    onTap: () {
-                      setState(() {
-                        selectedMarkerInfo = CustomMarkerInfo(
-                          title: data['title'] ?? '',
-                          description: data['description'] ?? '',
-                          imageUrl: imageUrl,
-                          youtubeLink: data['youtubeLink'],
-                        );
-                        showInfoWindow = true;
-                        infoWindowPosition = markerPosition;
-                        selectedMarkerId = markerId;
-                      });
-                    },
-                  ),
-                );
-              });
+          Future<void> createMarker() async {
+            BitmapDescriptor icon;
+            if (imageUrl.isNotEmpty) {
+              icon = await YoutubeService.getBitmapDescriptorFromNetworkImage(imageUrl);
+            } else {
+              icon = BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueViolet,
+              );
             }
 
-            // 반드시 비동기로 실행
-            createMarker();
+            markers.add(
+              Marker(
+                markerId: MarkerId(markerId),
+                position: markerPosition,
+                icon: icon,
+                zIndexInt: 0,
+                onTap: () {
+                  setState(() {
+                    selectedMarkerInfo = CustomMarkerInfo(
+                      title: data['title'] ?? '',
+                      description: data['description'] ?? '',
+                      imageUrl: imageUrl,
+                      youtubeLink: data['youtubeLink'],
+                    );
+                    showInfoWindow = true;
+                    infoWindowPosition = markerPosition;
+                    selectedMarkerId = markerId;
+                  });
+                },
+              ),
+            );
           }
+
+          // 반드시 비동기로 실행
+          await createMarker();
         }
-      });
+      }
     } catch (e) {
       print('마커 로드 오류: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('마커 로드 중 오류가 발생했습니다: $e')));
     }
+
+    await addLiveRoomMarkers();
+    setState(() {});
   }
 
   @override
@@ -495,6 +494,46 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
         ),
       ),
     );
+  }
+
+  Future<void> addLiveRoomMarkers() async {
+    BitmapDescriptor liveIcon = await BitmapDescriptor.asset(
+      ImageConfiguration(size: Size(48, 48)),
+      'images/live60.png',          
+    );
+
+    final chatroomRepo = ChatroomRepository();
+    final chatrooms = await chatroomRepo.getChatRooms();
+
+    for (var chatroom in chatrooms) {
+      GeoPoint hostLocation = chatroom['hostLocation'];
+      LatLng hostLatLng = LatLng(
+        hostLocation.latitude,
+        hostLocation.longitude,
+      );
+      if (markerService.isMarkerWithinRange(currentPosition, hostLatLng, searchRadius)) {
+        markers.add(
+          Marker(
+            markerId: MarkerId(chatroom['id']),
+            position: hostLatLng,
+            icon: liveIcon,
+            zIndexInt: 1,
+            onTap: () async {
+              final refresh = await Navigator.push<bool>(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => LiveStreamingRoomScreen(roomRef: chatroom['ref']),
+                ),
+              );
+              if (refresh == true) {
+                loadMarkersFromFirestore();
+                setState(() {});
+              }
+            },
+          ),
+        );
+      }
+    }
   }
 
   @override

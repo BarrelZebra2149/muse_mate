@@ -2,9 +2,12 @@
 // YouTube 동영상 재생, 재생목록 관리, 검색, 재생 컨트롤 기능을 제공.
 // youtube_player_iframe 패키지를 사용하여 YouTube 동영상을 임베드, 재생목록 및 컨트롤을 위한 커스텀 위젯을 사용.
 
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:muse_mate/models/video_model.dart';
 import 'package:muse_mate/repository/chatroom_repository.dart';
+import 'package:muse_mate/service/location_service.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/screen/streaming/circular_progress_player.dart';
 import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
@@ -24,6 +27,9 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
   late YoutubePlayerController _controller;
   VideoModel? _currentVideo;
   final chatroomRepo = ChatroomRepository();
+  Stream<Position>? positionStream;
+  StreamSubscription<Position>? positionSubscription; // Stream 구독 객체 저장
+  Position? currentPosition;
 
   // 초기 동영상을 로드.
   loadVideo() async {
@@ -46,9 +52,29 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
     setState(() {});
   }
 
+  Future<void> _initLocationStream() async {
+    final hasPermission = await LocationService.handleLocationPermission(context);
+    if (!hasPermission) {
+      return;
+    }
+
+    positionStream = Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // 10m 이상 이동 시 업데이트
+      ),
+    );
+
+    positionSubscription = positionStream!.listen((Position position) {
+      chatroomRepo.updateHostLocation(position, widget.roomRef);
+    });
+  }
+  
+  
   @override
   void initState() {
     super.initState();
+    _initLocationStream();
 
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(
@@ -147,7 +173,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
               icon: Icon(Icons.arrow_back),
               onPressed: () async {
                 chatroomRepo.deleteChatroomIfHost(widget.roomRef);
-                Navigator.of(context).pop(); // 현재 화면 종료
+                Navigator.of(context).pop(true); // 현재 화면 종료
               },
             ),
             title: const Text('Youtube Player IFrame Demo'),
@@ -173,7 +199,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
                             SnackBar(content: Text('싱크 맞추기 완료')),
                           );
                         },
-                        child: Icon(Icons.refresh),
+                        child: Icon(Icons.sync),
                         tooltip: '라이브 방 싱크 맞추기',
                       ),
                     ),
@@ -204,6 +230,7 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
   @override
   void dispose() {
     _controller.close();
+    positionSubscription?.cancel(); // Stream 구독 취소
     super.dispose();
   }
 }

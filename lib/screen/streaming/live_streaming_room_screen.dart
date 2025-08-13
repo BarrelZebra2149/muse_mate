@@ -37,7 +37,7 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
         }
         if (!snapshot.data!.exists) {
           // 문서가 없는 경우 현재 화면 dismiss
-          Navigator.pop(context);
+          Navigator.pop(context, true);
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('호스트가 방을 떠났습니다.')));
