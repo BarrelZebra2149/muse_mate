@@ -132,29 +132,22 @@ class _ChatroomListState extends State<ChatroomListScreen> {
                           chatRoomDoc.data() as Map<String, dynamic>;
                       chatRoomData['ref'] = chatRoomDoc.reference;
 
-                    return ListTile(
-                      title: Text(chatRoomData['roomName'] ?? '이름없는 방'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LiveStreamingRoomScreen(
-                              roomRef: chatRoomData['ref'],
+                      return ListTile(
+                        title: Text(chatRoomData['roomName'] ?? '이름없는 방'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LiveStreamingRoomScreen(
+                                roomRef: chatRoomData['ref'],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ElevatedButton(
-              onPressed: () {
-                createChatRoom();
+                          );
+                        },
+                      );
+                    },
+                  ),
+                );
               },
             ),
             Padding(
