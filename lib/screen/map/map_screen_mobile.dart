@@ -247,18 +247,20 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
         final double longitude = data['longitude'] ?? 0.0;
         final LatLng markerPosition = LatLng(latitude, longitude);
         return markerService.isMarkerWithinRange(
-          currentPosition, markerPosition, searchRadius
+          currentPosition,
+          markerPosition,
+          searchRadius,
         );
       }).toList();
-      
+
       // 현재 위치 마커를 제외한 모든 마커 삭제
       final newMarkers = <Marker>{};
       newMarkers.addAll(
-        markers.where((marker) => marker.markerId.value == 'currentLocation')
+        markers.where((marker) => marker.markerId.value == 'currentLocation'),
       );
-      
+
       final newMarkerOwners = <String, String>{};
-      
+
       // 모든 마커 아이콘을 병렬로 로드
       final markerFutures = filteredDocs.map((doc) async {
         final data = doc.data() as Map<String, dynamic>;
@@ -268,18 +270,22 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
         final LatLng markerPosition = LatLng(latitude, longitude);
         final String ownerId = data['ownerId'] ?? '';
         final String imageUrl = data['imageUrl'] ?? '';
-        
+
         // 소유자 정보 저장
         newMarkerOwners[markerId] = ownerId;
-        
+
         // 마커 아이콘 생성
         BitmapDescriptor icon;
         if (imageUrl.isNotEmpty) {
-          icon = await YoutubeService.getBitmapDescriptorFromNetworkImage(imageUrl);
+          icon = await YoutubeService.getBitmapDescriptorFromNetworkImage(
+            imageUrl,
+          );
         } else {
-          icon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet);
+          icon = BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueViolet,
+          );
         }
-        
+
         return Marker(
           markerId: MarkerId(markerId),
           position: markerPosition,
@@ -300,16 +306,15 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
           },
         );
       }).toList();
-      
+
       // 모든 마커가 생성될 때까지 기다림
       final loadedMarkers = await Future.wait(markerFutures);
-      
+
       newMarkers.addAll(loadedMarkers);
       markers = newMarkers;
       markerOwners.clear();
       markerOwners.addAll(newMarkerOwners);
-    } 
-    catch (e) {
+    } catch (e) {
       print('마커 로드 오류: $e');
       ScaffoldMessenger.of(
         context,
@@ -360,8 +365,15 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
         selectedMarkerId != null &&
         markerOwners[selectedMarkerId] == currentUser!.uid;
 
-    return FutureBuilder<DocumentSnapshot>(
-      future: markerService.markersCollection.doc(selectedMarkerId).get(),
+    return FutureBuilder<List<DocumentSnapshot>>(
+      future: Future.wait([
+        markerService.markersCollection.doc(selectedMarkerId).get(),
+        markerService.markersCollection
+            .doc(selectedMarkerId)
+            .collection('granted')
+            .doc(currentUser!.uid)
+            .get(),
+      ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -370,13 +382,17 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
           return const SizedBox.shrink();
         }
 
-        final markerData = snapshot.data!.data();
-        bool isPrivate = (markerData is Map<String, dynamic>)
+        final markerSnap = snapshot.data![0];
+        final grantedSnap = snapshot.data![1];
+
+        final markerData = markerSnap.data();
+        bool isPrivateMarker = (markerData is Map<String, dynamic>)
             ? (markerData['isPrivate'] ?? false)
             : false;
+        bool isAuthorized = grantedSnap.exists;
 
-        // If the marker is private and the user is not the owner, show password dialog
-        if (isPrivate && !isOwner) {
+        // If the marker is private and the user is not the owner and not authorized, show password dialog
+        if (isPrivateMarker && !isOwner && !isAuthorized) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             String enteredPassword = '';
             showDialog(
@@ -419,10 +435,16 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
                           : null;
 
                       if (enteredPassword == correctPassword) {
-                        setState(() {
-                          showInfoWindow = true;
-                        });
+                        // Grant permission
+                        await markerService.markersCollection
+                            .doc(selectedMarkerId)
+                            .collection('granted')
+                            .doc(currentUser!.uid)
+                            .set({});
                         Navigator.pop(dialogContext);
+                        setState(
+                          () {},
+                        ); // Rebuild to refetch data and show info window
                       } else {
                         if (mounted) {
                           ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -437,11 +459,10 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
               ),
             );
           });
-          // Show nothing until password is verified
-          return const SizedBox.shrink();
+          return const SizedBox.shrink(); // Don't show info window until authorized
         }
 
-        // Info screen for marker (shown if public, owner, or password correct)
+        // If the marker is public or the user is the owner or authorized, show the info window
         return Positioned(
           right: 20,
           top: 100,
@@ -570,128 +591,136 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
     String title = '';
     String description = '';
     String youtubeLink = '';
-    bool isPrivate = false;
+    bool selectedPrivateMode = false;
     String privatePw = '';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('이 위치에 음악 추가'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: const InputDecoration(labelText: '제목'),
-                onChanged: (value) => title = value,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: '설명',
-                  alignLabelWithHint: true,
+      builder: (context) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('이 위치에 음악 추가'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  decoration: const InputDecoration(labelText: '제목'),
+                  onChanged: (value) => title = value,
                 ),
-                maxLines: 3,
-                onChanged: (value) => description = value,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: '유튜브 링크',
-                  hintText: '링크 입력',
-                  prefixIcon: Icon(Icons.music_note),
-                ),
-                onChanged: (value) => youtubeLink = value,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: const Text('공개'),
-                      value: false,
-                      groupValue: isPrivate,
-                      onChanged: (value) => setState(() => isPrivate = value!),
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: const Text('비공개'),
-                      value: true,
-                      groupValue: isPrivate,
-                      onChanged: (value) => setState(() => isPrivate = value!),
-                    ),
-                  ),
-                ],
-              ),
-              if (isPrivate)
+                const SizedBox(height: 10),
                 TextField(
                   decoration: const InputDecoration(
-                    labelText: '비밀번호',
-                    hintText: '비공개 마커 비밀번호',
+                    labelText: '설명',
+                    alignLabelWithHint: true,
                   ),
-                  obscureText: true,
-                  onChanged: (value) => privatePw = value,
+                  maxLines: 3,
+                  onChanged: (value) => description = value,
                 ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.search),
-                label: const Text('유튜브에서 음악 검색'),
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SearchYoutubeScreen(),
-                    ),
-                  );
-
-                  if (result != null && result is Map<String, dynamic>) {
-                    Navigator.pop(context);
-                    showAddMarkerDialogWithYoutube(
-                      position,
-                      result['videoId'],
-                      result['title'],
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (title.isNotEmpty) {
-                if (isPrivate && privatePw.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('비공개 마커는 비밀번호를 입력해야 합니다.')),
-                  );
-                  return;
-                }
-                addCustomMarker(
-                  position: position,
-                  markerInfo: CustomMarkerInfo(
-                    title: title,
-                    description: description.isNotEmpty ? description : '설명 없음',
-                    youtubeLink: youtubeLink.isNotEmpty ? youtubeLink : null,
+                const SizedBox(height: 10),
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: '유튜브 링크',
+                    hintText: '링크 입력',
+                    prefixIcon: Icon(Icons.music_note),
                   ),
-                  isPrivate: isPrivate,
-                  privatePw: isPrivate ? privatePw : null,
-                );
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('제목을 입력해주세요.')));
-              }
-            },
-            child: const Text('추가'),
+                  onChanged: (value) => youtubeLink = value,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<bool>(
+                        title: const Text('공개'),
+                        value: false,
+                        groupValue: selectedPrivateMode,
+                        onChanged: (value) {
+                          setDialogState(() => selectedPrivateMode = value!);
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<bool>(
+                        title: const Text('비공개'),
+                        value: true,
+                        groupValue: selectedPrivateMode,
+                        onChanged: (value) {
+                          setDialogState(() => selectedPrivateMode = value!);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                if (selectedPrivateMode)
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: '비밀번호',
+                      hintText: '비공개 마커 비밀번호',
+                    ),
+                    obscureText: true,
+                    onChanged: (value) => privatePw = value,
+                  ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.search),
+                  label: const Text('유튜브에서 음악 검색'),
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchYoutubeScreen(),
+                      ),
+                    );
+
+                    if (result != null && result is Map<String, dynamic>) {
+                      Navigator.pop(context);
+                      showAddMarkerDialogWithYoutube(
+                        position,
+                        result['videoId'],
+                        result['title'],
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (title.isNotEmpty) {
+                  if (selectedPrivateMode && privatePw.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('비공개 마커는 비밀번호를 입력해야 합니다.')),
+                    );
+                    return;
+                  }
+                  addCustomMarker(
+                    position: position,
+                    markerInfo: CustomMarkerInfo(
+                      title: title,
+                      description: description.isNotEmpty
+                          ? description
+                          : '설명 없음',
+                      youtubeLink: youtubeLink.isNotEmpty ? youtubeLink : null,
+                    ),
+                    isPrivate: selectedPrivateMode,
+                    privatePw: selectedPrivateMode ? privatePw : null,
+                  );
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('제목을 입력해주세요.')));
+                }
+              },
+              child: const Text('추가'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -699,7 +728,7 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
   Future<void> addLiveRoomMarkers() async {
     BitmapDescriptor liveIcon = await BitmapDescriptor.asset(
       ImageConfiguration(size: Size(48, 48)),
-      'images/live60.png',          
+      'images/live60.png',
     );
 
     final chatroomRepo = ChatroomRepository();
@@ -707,11 +736,12 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
 
     for (var chatroom in chatrooms) {
       GeoPoint hostLocation = chatroom['hostLocation'];
-      LatLng hostLatLng = LatLng(
-        hostLocation.latitude,
-        hostLocation.longitude,
-      );
-      if (markerService.isMarkerWithinRange(currentPosition, hostLatLng, searchRadius)) {
+      LatLng hostLatLng = LatLng(hostLocation.latitude, hostLocation.longitude);
+      if (markerService.isMarkerWithinRange(
+        currentPosition,
+        hostLatLng,
+        searchRadius,
+      )) {
         markers.add(
           Marker(
             markerId: MarkerId(chatroom['id']),
@@ -720,9 +750,10 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
             zIndexInt: 1,
             onTap: () async {
               final refresh = await Navigator.push<bool>(
-                context, 
+                context,
                 MaterialPageRoute(
-                  builder: (context) => LiveStreamingRoomScreen(roomRef: chatroom['ref']),
+                  builder: (context) =>
+                      LiveStreamingRoomScreen(roomRef: chatroom['ref']),
                 ),
               );
               if (refresh == true) {
@@ -840,7 +871,6 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
   }
 
   // 마커 추가 다이얼로그 표시
-
   Future<void> showEditMarkerDialog() async {
     if (selectedMarkerInfo == null || selectedMarkerId == null) return;
 
