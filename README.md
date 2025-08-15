@@ -16,7 +16,7 @@
 ## 🛠 개발 정보
 
 - **개발 플랫폼**: [Flutter](https://flutter.dev/) (크로스 플랫폼 모바일 앱)
-- **음악 스트리밍**: [Spotify API](https://developer.spotify.com/) 연동
+- **음악 스트리밍**: [youtube_player_iframe 플러터 패키지](https://pub.dev/packages/youtube_player_iframe) 사용
 - **실시간 소통**: [Firebase](https://firebase.google.com/) 기반 1:1 채팅 & 장르별 라이브 채팅방
 - **위치 기반 콘텐츠**: [Google Maps API](https://developers.google.com/maps) 활용 ‘음악 보물찾기’
 
