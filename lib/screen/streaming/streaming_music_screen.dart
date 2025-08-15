@@ -2,9 +2,12 @@
 // YouTube 동영상 재생, 재생목록 관리, 검색, 재생 컨트롤 기능을 제공.
 // youtube_player_iframe 패키지를 사용하여 YouTube 동영상을 임베드, 재생목록 및 컨트롤을 위한 커스텀 위젯을 사용.
 
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:muse_mate/models/video_model.dart';
 import 'package:muse_mate/repository/chatroom_repository.dart';
+import 'package:muse_mate/service/location_service.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:muse_mate/screen/streaming/circular_progress_player.dart';
 import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
@@ -12,10 +15,7 @@ import 'package:muse_mate/screen/streaming/my_playlist.dart';
 
 // YouTube 음악 재생 및 재생목록 관리를 위한 메인 화면.
 class StreamingMusicScreen extends StatefulWidget {
-  const StreamingMusicScreen({
-    super.key,
-    required this.roomRef,
-  });
+  const StreamingMusicScreen({super.key, required this.roomRef});
 
   final dynamic roomRef;
 
@@ -27,7 +27,9 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
   late YoutubePlayerController _controller;
   VideoModel? _currentVideo;
   final chatroomRepo = ChatroomRepository();
-
+  Stream<Position>? positionStream;
+  StreamSubscription<Position>? positionSubscription; // Stream 구독 객체 저장
+  Position? currentPosition;
 
   // 초기 동영상을 로드.
   loadVideo() async {
@@ -36,8 +38,10 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       setState(() {}); // 로딩 인디케이터 표시용
       return;
     }
-    
-    final elapsedSeconds = await chatroomRepo.getElapsedSecondsSinceLastTrack(widget.roomRef);
+
+    final elapsedSeconds = await chatroomRepo.getElapsedSecondsSinceLastTrack(
+      widget.roomRef,
+    );
 
     if (_currentVideo?.videoId != '') {
       _controller.loadVideoById(
@@ -45,13 +49,32 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
         startSeconds: elapsedSeconds,
       );
     }
-    setState((){});
+    setState(() {});
   }
 
+  Future<void> _initLocationStream() async {
+    final hasPermission = await LocationService.handleLocationPermission(context);
+    if (!hasPermission) {
+      return;
+    }
 
+    positionStream = Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // 10m 이상 이동 시 업데이트
+      ),
+    );
+
+    positionSubscription = positionStream!.listen((Position position) {
+      chatroomRepo.updateHostLocation(position, widget.roomRef);
+    });
+  }
+  
+  
   @override
   void initState() {
     super.initState();
+    _initLocationStream();
 
     // YouTube 플레이어 컨트롤러를 초기화.
     _controller = YoutubePlayerController(
@@ -83,12 +106,11 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
       _currentVideo,
       widget.roomRef,
     );
-    setState((){}); // playlist에 현재 곡 반영하기 위해.
+    setState(() {}); // playlist에 현재 곡 반영하기 위해.
 
     if (_currentVideo != null) {
       _controller.loadVideoById(videoId: _currentVideo!.videoId);
-    } 
-    else {
+    } else {
       _controller.pauseVideo();
     }
   }
@@ -101,21 +123,20 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
     if (playlistCount == 1) {
       _currentVideo = await chatroomRepo.getNowPlayingVideo(widget.roomRef);
       _controller.loadVideoById(videoId: _currentVideo!.videoId);
-      setState((){});
+      setState(() {});
     }
   }
-
 
   // 재생목록에서 동영상을 제거함.
   void _removeVideo(int index, VideoModel video) async {
     if (video.videoRef == _currentVideo?.videoRef) {
       _moveToNextVideo();
-      setState((){});
+      setState(() {});
       return;
     }
 
     await chatroomRepo.deleteFromPlaylist(video, index, widget.roomRef);
-    setState((){});
+    setState(() {});
   }
 
   @override
@@ -138,7 +159,9 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: SearchYoutubeScreen(
                   onVideoTap: (id, title) {
-                    _onVideoSelected(VideoModel(videoId: id, title: title, videoRef: ''));
+                    _onVideoSelected(
+                      VideoModel(videoId: id, title: title, videoRef: ''),
+                    );
                     Navigator.of(context).pop(); // 검색 후 drawer 닫기
                   },
                 ),
@@ -150,59 +173,45 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
               icon: Icon(Icons.arrow_back),
               onPressed: () async {
                 chatroomRepo.deleteChatroomIfHost(widget.roomRef);
-                Navigator.of(context).pop(); // 현재 화면 종료
+                Navigator.of(context).pop(true); // 현재 화면 종료
               },
             ),
             title: const Text('Youtube Player IFrame Demo'),
             actions: const [VideoPlaylistIconButton()],
           ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth > 750) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                customPlayer,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(
-                      flex: 3,
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              customPlayer,
-                              const Controls(),
-                              // if (_currentVideo != null)
-                                MyPlayList(
-                                  roomRef: widget.roomRef,
-                                  currentVideo: _currentVideo,
-                                  onRemove: _removeVideo,
-                                ),
-                            ],
-                          ),
-                        ),
+                    const Controls(),
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: FloatingActionButton(
+                        mini: true,
+                        onPressed: () {
+                          loadVideo(); // 현재 방의 동영상 싱크 맞추기
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('싱크 맞추기 완료')),
+                          );
+                        },
+                        child: Icon(Icons.sync),
+                        tooltip: '라이브 방 싱크 맞추기',
                       ),
                     ),
                   ],
-                );
-              }
-              // 모바일 레이아웃
-              return SingleChildScrollView(
-                child: Column(
-                  children: [
-                    customPlayer,
-                    const Controls(),
-                    // if (_currentVideo != null)
-                      MyPlayList(
-                        roomRef: widget.roomRef,
-                        currentVideo: _currentVideo,
-                        onRemove: _removeVideo,
-                      ),
-                    // 검색창은 drawer에서만 띄움
-                  ],
                 ),
-              );
-            },
+                MyPlayList(
+                  roomRef: widget.roomRef,
+                  currentVideo: _currentVideo,
+                  onRemove: _removeVideo,
+                ),
+              ],
+            ),
           ),
           floatingActionButton: Builder(
             builder: (context) => FloatingActionButton(
@@ -221,13 +230,13 @@ class _StreamingMusicScreenState extends State<StreamingMusicScreen> {
   @override
   void dispose() {
     _controller.close();
+    positionSubscription?.cancel(); // Stream 구독 취소
     super.dispose();
   }
 }
 
 // 재생 컨트롤 및 메타데이터를 위한 위젯.
 class Controls extends StatefulWidget {
-  
   const Controls({super.key});
 
   @override
@@ -249,7 +258,6 @@ class _ControlsState extends State<Controls> {
 
 // 앱바에서 재생목록 관련 동작을 위한 아이콘 버튼.
 class VideoPlaylistIconButton extends StatelessWidget {
-  
   const VideoPlaylistIconButton({super.key});
 
   @override

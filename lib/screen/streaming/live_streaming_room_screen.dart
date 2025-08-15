@@ -37,7 +37,7 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
         }
         if (!snapshot.data!.exists) {
           // 문서가 없는 경우 현재 화면 dismiss
-          Navigator.pop(context);
+          Navigator.pop(context, true);
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('호스트가 방을 떠났습니다.')));
@@ -47,7 +47,9 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
         List playlist = roomData['playlist'];
 
         if (playlist.isEmpty && user?.uid != roomData['hostUserId']) {
-          return Scaffold(body: Column(
+          return Scaffold(
+            body: Center(
+              child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             spacing: 20,
@@ -62,9 +64,8 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
           endDrawer: SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: Drawer(
-              child: SafeArea(
-                child: MessageScreen(roomRef: widget.roomRef),
-              ),
+
+              child: SafeArea(child: MessageScreen(roomRef: widget.roomRef)),
             ),
           ),
           body: Stack(
