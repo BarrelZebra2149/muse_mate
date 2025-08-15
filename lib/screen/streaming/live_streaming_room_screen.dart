@@ -50,13 +50,14 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
           return Scaffold(
             body: Center(
               child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 20,
-            children: [
-              CircularProgressIndicator(),
-              Text("호스트가 노래를 선택하는 중 입니다."),
-            ],
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 20,
+                children: [
+                  CircularProgressIndicator(),
+                  Text("호스트가 노래를 선택하는 중 입니다."),
+                ],
+              ),
           ));
         }
         return  Scaffold(
