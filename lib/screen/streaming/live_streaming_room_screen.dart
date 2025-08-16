@@ -65,6 +65,7 @@ class _LiveStreamingRoomScreenState extends State<LiveStreamingRoomScreen> {
           endDrawer: SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: Drawer(
+
               child: SafeArea(child: MessageScreen(roomRef: widget.roomRef)),
             ),
           ),
