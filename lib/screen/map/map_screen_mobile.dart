@@ -11,6 +11,8 @@ import 'package:muse_mate/service/google_places_service.dart';
 import 'package:muse_mate/service/place_marker_service.dart';
 import 'package:muse_mate/widget/place_info_side_panel.dart';
 
+import 'management_markers_screen.dart';
+
 class MapScreenMobile extends MapScreenBase {
   const MapScreenMobile({super.key});
 
@@ -789,6 +791,53 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
           // 정보 창
           if (showInfoWindow && selectedMarkerInfo != null)
             buildCustomInfoWindow(context),
+
+          // 내 마커 관리 버튼
+          Positioned(
+            right: 16,
+            bottom: 100,
+            child: FloatingActionButton(
+              heroTag: 'manageMarkers',
+              backgroundColor: Colors.purple,
+              child: const Icon(Icons.list),
+              onPressed: () async {
+                // 내 마커 관리 화면으로 이동
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyMarkersScreen(),
+                  ),
+                );
+
+                // 특정 마커 위치로 이동 (선택 사항)
+                if (result != null && result is Map<String, dynamic>) {
+                  final double lat = result['latitude'];
+                  final double lng = result['longitude'];
+                  mapController?.animateCamera(
+                    CameraUpdate.newLatLng(LatLng(lat, lng)),
+                  );
+                }
+
+                // 마커 목록 새로고침
+                loadMarkersFromFirestore();
+              },
+            ),
+          ),
+
+          // 새로고침 버튼 추가
+          Positioned(
+            right: 16,
+            bottom: 170,
+            child: FloatingActionButton(
+              heroTag: 'refresh',
+              backgroundColor: Colors.green,
+              child: const Icon(Icons.refresh),
+              onPressed: () {
+                getCurrentLocation(); // 위치 새로고침
+                loadMarkersFromFirestore(); // 마커 새로고침
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -1088,9 +1137,11 @@ class _MapScreenMobileState extends MapScreenBaseState<MapScreenMobile> {
                   markerInfo: CustomMarkerInfo(
                     title: title,
                     description: description.isNotEmpty ? description : '설명 없음',
+                    imageUrl: selectedMarkerInfo!.imageUrl,
                     youtubeLink: youtubeLink,
                   ),
                 );
+
               } else {
                 ScaffoldMessenger.of(
                   context,

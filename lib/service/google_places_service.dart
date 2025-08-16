@@ -18,6 +18,11 @@ class GooglePlacesService {
       return [];
     }
 
+    print(location);
+    print(radius.toInt());
+    print(type);
+    print(_apiKey);
+
     final url = '$_baseUrl/nearbysearch/json'
         '?location=${location.latitude},${location.longitude}'
         '&radius=${radius.toInt()}'
