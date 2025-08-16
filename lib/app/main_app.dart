@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       'icon': Icons.play_arrow,
       'title': '라이브방 생성 및 참여',
-      'screen': const LiveChatScreen(),
+      'screen': const LiveRoomScreen(),
     },
   ];
 
