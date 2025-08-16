@@ -3,16 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:muse_mate/models/marker_model.dart';
+import 'package:muse_mate/models/place_model.dart';
 import 'package:muse_mate/repository/chatroom_repository.dart';
 import 'package:muse_mate/screen/streaming/live_streaming_room_screen.dart';
-import 'package:muse_mate/screen/streaming/streaming_music_screen.dart';
 import 'package:muse_mate/screen/youtube_search/drop_music_screen_youtube.dart';
 import 'package:muse_mate/screen/map/management_markers_screen.dart';
 import 'package:muse_mate/screen/map/map_screen_base.dart';
 import 'package:muse_mate/screen/youtube_search/search_youtube_screen.dart';
 import 'package:muse_mate/service/location_service.dart';
+import 'package:muse_mate/service/place_marker_service.dart';
 import 'package:muse_mate/service/youtube_service.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:muse_mate/service/google_places_service.dart';
+import 'package:muse_mate/widget/place_info_side_panel.dart';
 
 class MapScreenWeb extends MapScreenBase {
   const MapScreenWeb({super.key});
@@ -22,6 +25,13 @@ class MapScreenWeb extends MapScreenBase {
 }
 
 class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
+  List<PlaceModel> _nearbyPlaces = [];
+  final PlaceMarkerService _placeMarkerService = PlaceMarkerService();
+  bool _showPlaceMarkers = false; // 토글 기능을 위해 기본값 false
+  bool _isLoadingPlaces = false;
+  PlaceModel? _selectedPlace;
+  bool _showSidePanel = false;
+
   @override
   void initState() {
     super.initState();
@@ -230,11 +240,25 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
     try {
       final docs = await markerService.loadMarkersFromFirestore();
 
+      // 범위 내에 있는 마커만 필터링
+      final filteredDocs = docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        final double latitude = data['latitude'] ?? 0.0;
+        final double longitude = data['longitude'] ?? 0.0;
+        final LatLng markerPosition = LatLng(latitude, longitude);
+        return markerService.isMarkerWithinRange(
+            currentPosition, markerPosition, searchRadius
+        );
+      }).toList();
+
       // 현재 위치 마커를 제외한 모든 마커 삭제
-      markers.removeWhere(
-            (marker) => marker.markerId.value != 'currentLocation',
+      final newMarkers = <Marker>{};
+      newMarkers.addAll(
+          markers.where((marker) => marker.markerId.value == 'currentLocation')
       );
       markerOwners.clear();
+
+      final newMarkerOwners = <String, String>{};
 
       // Firestore에서 가져온 마커 중 범위 내 마커만 추가
       for (var doc in docs) {
@@ -408,6 +432,121 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
     );
   }
 
+  Future<void> _loadNearbyPlaces() async {
+    if (_isLoadingPlaces) return; // 중복 호출 방지
+
+    setState(() => _isLoadingPlaces = true);
+
+    try {
+      final places = await GooglePlacesService.getNearbyPlaces(
+        location: currentPosition,
+        radius: searchRadius,
+      );
+
+      setState(() {
+        _nearbyPlaces = places;
+      });
+
+      if (_showPlaceMarkers) {
+        await _addPlaceMarkers();
+      }
+
+      await _loadExistingPlaceMarkers();
+    } catch (e) {
+      print('Error loading nearby places: $e');
+    } finally {
+      setState(() => _isLoadingPlaces = false);
+    }
+  }
+
+  Future<void> _addPlaceMarkers() async {
+    final placeMarkers = <Marker>{};
+
+    for (final place in _nearbyPlaces) {
+      final markerPosition = LatLng(place.latitude, place.longitude);
+
+      if (markerService.isMarkerWithinRange(currentPosition, markerPosition, searchRadius)) {
+        placeMarkers.add(
+          Marker(
+            markerId: MarkerId('place_${place.id}'),
+            position: LatLng(place.latitude, place.longitude),
+            icon: await BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+            onTap: () => _onPlaceMarkerTapped(place),
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      markers.addAll(placeMarkers);
+    });
+  }
+
+  Future<void> _loadExistingPlaceMarkers() async {
+    try {
+      final docs = await _placeMarkerService.getPlaceMarkersInRange(
+        center: currentPosition,
+        radiusInMeters: searchRadius,
+      );
+
+      final musicMarkers = <Marker>{};
+
+      for (final doc in docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final lat = data['latitude'] ?? 0.0;
+        final lng = data['longitude'] ?? 0.0;
+
+        // PlaceModel 생성 시 photoUrl 필드명 수정
+        final place = PlaceModel(
+          id: data['placeId'] ?? doc.id, // placeId 사용
+          name: data['placeName'] ?? '음악이 추가된 장소',
+          address: data['placeAddress'] ?? '',
+          latitude: lat,
+          longitude: lng,
+          rating: (data['placeRating'] ?? 0.0).toDouble(),
+          photoReference: data['photoReference'], // photoUrl이 아닌 photoReference
+          types: (data['types'] as List<dynamic>?)?.cast<String>() ?? [],
+        );
+
+        print("name : ");
+        print(place.name);
+
+        musicMarkers.add(
+          Marker(
+            markerId: MarkerId('place_music_${doc.id}'),
+            position: LatLng(lat, lng),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+            onTap: () => _onPlaceMarkerTapped(place),
+          ),
+        );
+      }
+
+      setState(() {
+        markers.addAll(musicMarkers);
+      });
+    } catch (e) {
+      print('Place music markers 로딩 오류: $e');
+    }
+  }
+
+  void _onPlaceMarkerTapped(PlaceModel place) {
+    setState(() {
+      _selectedPlace = place;
+      _showSidePanel = true;
+    });
+
+    print("place marker tapped");
+  }
+
+  void _closeSidePanel() {
+    setState(() {
+      _showSidePanel = false;
+      _selectedPlace = null;
+    });
+
+    print("place marker closed");
+  }
+
   // 유튜브 검색 결과로 마커 추가 다이얼로그
   void showAddMarkerDialogWithYoutube(
     LatLng position,
@@ -554,11 +693,69 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
                   circles: circles,
                   myLocationEnabled: true,
                   myLocationButtonEnabled: true,
-                  onTap: onMapTapped,
+                  onTap: (LatLng position) {
+                    // 지도를 탭하면 사이드 패널 닫기
+                    if (_showSidePanel) {
+                      _closeSidePanel();
+                    }
+                    onMapTapped(position);
+                  },
+          ),
+
+          Positioned(
+            top: 200,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: 'togglePlaces',
+              backgroundColor: _showPlaceMarkers ? Colors.blue : Colors.grey,
+              onPressed: () async {
+                setState(() {
+                  _showPlaceMarkers = !_showPlaceMarkers;
+                });
+
+                if (_showPlaceMarkers) {
+                  if (_nearbyPlaces.isEmpty) {
+                    await _loadNearbyPlaces();
+                  } else {
+                    await _addPlaceMarkers();
+                  }
+                } else {
+                  markers.removeWhere((marker) =>
+                      marker.markerId.value.startsWith('place_'));
+                  setState(() {});
+
+                  if (_showSidePanel) {
+                    _closeSidePanel();
+                  }
+                }
+              },
+              child: _isLoadingPlaces
+                  ? const SizedBox(
+                width: 20, height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
+              )
+                  : const Icon(Icons.restaurant),
+            ),
+          ),
 
           // 범위 조절 컨트롤
           buildRangeControls(),
+
+          if (_showSidePanel && _selectedPlace != null)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: PlaceInfoSidePanel(
+                place: _selectedPlace!,
+                onClose: _closeSidePanel,
+                onMusicAdded: (place, title, description, youtubeLink) {
+                  _loadExistingPlaceMarkers(); // 마커 새로고침
+                },
+              ),
+            ),
 
           // 정보 창
           if (showInfoWindow && selectedMarkerInfo != null)
@@ -870,8 +1067,8 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
             circleId: const CircleId('searchRange'),
             center: currentPosition,
             radius: searchRadius,
-            fillColor: Colors.purple.withOpacity(0.2),
-            strokeColor: Colors.purple,
+            fillColor: Colors.blue.withOpacity(0.2),
+            strokeColor: Colors.blue,
             strokeWidth: 2,
           ),
         );
@@ -885,6 +1082,7 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
       searchRadius = newRadius;
     });
     addRangeCircle(); // 원 업데이트
+    _loadNearbyPlaces();
     loadMarkersFromFirestore(); // 마커 다시 로드
   }
 
