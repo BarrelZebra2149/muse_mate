@@ -373,10 +373,18 @@ class _MapScreenWebState extends MapScreenBaseState<MapScreenWeb> {
                   label: const Text('유튜브에서 음악 검색'),
                   onPressed: () async {
                     // 유튜브 검색 화면으로 이동
-                    final result = await Navigator.push(
+                    final result = await Navigator.push<Map<String, dynamic>>(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const SearchYoutubeScreen(),
+                        builder: (_) => SearchYoutubeScreen(
+                          onVideoTap: (String videoId, String title) {
+                            Navigator.pop(context, 
+                              {'videoId': videoId, 
+                              'title': title}
+                            );
+                          },
+                        ),
+                        fullscreenDialog: true,
                       ),
                     );
 
